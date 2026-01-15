@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  # Hardhat local blockchain node
+  hardhat:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./contracts:/app
+    ports:
+      - "8545:8545"
+    command: sh -c "npm install && npx hardhat node"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8545"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Rust backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-etched-dev-secret}
+      - ADMIN_ADDRESSES=${ADMIN_ADDRESSES:-0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266}
+      - PUBLIC_BASE_URL=http://localhost:8080
+      - BIND_ADDR=0.0.0.0:8080
+    volumes:
+      - ./backend/data:/app/data
+    depends_on:
+      hardhat:
+        condition: service_healthy
+
+  # Next.js frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://localhost:8080
+      - NEXT_PUBLIC_CONTRACT_ADDRESS=${CONTRACT_ADDRESS:-}
+      - NEXT_PUBLIC_CHAIN_ID=31337
+    depends_on:
+      - backend
+
+networks:
+  default:
+    name: etched-network

@@ -1,0 +1,99 @@
+# ============================================
+# Etched Project - Git Ignore
+# ============================================
+
+# ==================== General ====================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+.env
+.env.local
+.env.*.local
+
+# ==================== IDE / Editor ====================
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+.project
+.settings/
+.classpath
+
+# ==================== Node.js ====================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ==================== Next.js (Frontend) ====================
+frontend/.next/
+frontend/out/
+frontend/.vercel
+frontend/.turbo
+frontend/next-env.d.ts
+
+# ==================== Rust (Backend) ====================
+backend/target/
+backend/Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# ==================== Hardhat / Solidity (Contracts) ====================
+contracts/cache/
+contracts/artifacts/
+contracts/node_modules/
+contracts/typechain/
+contracts/typechain-types/
+contracts/coverage/
+contracts/coverage.json
+
+# ==================== Build & Output ====================
+dist/
+build/
+*.tsbuildinfo
+
+# ==================== Test & Coverage ====================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+
+# ==================== Docker ====================
+.docker/
+
+# ==================== Secrets & Keys ====================
+*.pem
+*.key
+*.crt
+.env
+.env.*
+!.env.example
+
+# ==================== Data & Metadata ====================
+backend/data/
+backend/data/metadata/
+*.json.backup
+
+# ==================== OS Generated ====================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==================== Temporary Files ====================
+*.bak
+*.backup
+*~
+\#*\#
