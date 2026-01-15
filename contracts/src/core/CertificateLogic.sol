@@ -12,11 +12,25 @@ import "./ValidatorRegistry.sol";
  * @notice Handles the certificator -> validator -> minting workflow
  */
 abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
+    // Resolve conflict between ERC721URIStorage and AccessControl (via ValidatorRegistry)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        virtual
+        override(ERC721URIStorage, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
     using Counters for Counters.Counter;
 
     // Counters
     Counters.Counter internal _tokenIdCounter;
     Counters.Counter internal _requestIdCounter;
+    Counters.Counter internal _poolIdCounter;
 
     // Storage
     mapping(uint256 => CertificateRequest) internal _certificateRequests;
@@ -24,6 +38,11 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
     mapping(string => uint256) internal _hashToTokenId;
     mapping(string => bool) internal _usedHashes;
     mapping(address => uint256[]) internal _recipientCertificates;
+    mapping(uint256 => Pool) internal _pools;
+
+    // Config
+    address public feeReceiver;
+    uint256 public poolCreationFee = 0.1 ether;
 
     // ============ Certificator Functions ============
 
@@ -74,6 +93,58 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         );
 
         return requestId;
+    }
+
+    // ============ Admin Config Functions ============
+
+    function setFeeReceiver(address _receiver) external onlyRole(ADMIN_ROLE) {
+        feeReceiver = _receiver;
+    }
+
+    function setPoolCreationFee(uint256 _fee) external onlyRole(ADMIN_ROLE) {
+        poolCreationFee = _fee;
+    }
+
+    function withdraw(address payable _to) external onlyRole(ADMIN_ROLE) {
+        (bool success, ) = _to.call{value: address(this).balance}("");
+        require(success, "Withdraw failed");
+    }
+
+    // ============ Validator Functions ============
+
+    /**
+     * @dev Create a new certificate pool
+     * @notice Anyone can create a pool by paying the fee
+     * @notice Validator verification is done off-chain
+     */
+    function createPool(
+        string memory name,
+        string memory description
+    ) external payable returns (uint256) {
+        require(msg.value >= poolCreationFee, "Insufficient fee");
+        require(bytes(name).length > 0, "Pool name required");
+
+        if (poolCreationFee > 0 && feeReceiver != address(0)) {
+            (bool success, ) = payable(feeReceiver).call{value: msg.value}("");
+            require(success, "Transfer failed");
+        }
+
+        _poolIdCounter.increment();
+        uint256 poolId = _poolIdCounter.current();
+
+        _pools[poolId] = Pool({
+            poolId: poolId,
+            name: name,
+            description: description,
+            validator: msg.sender,
+            institutionId: "",
+            isActive: true,
+            createdAt: block.timestamp
+        });
+
+        emit PoolCreated(poolId, msg.sender, name, msg.value);
+
+        return poolId;
     }
 
     // ============ Validator Functions ============
@@ -254,5 +325,20 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
      */
     function totalRequests() external view returns (uint256) {
         return _requestIdCounter.current();
+    }
+
+    /**
+     * @dev Get pool info
+     */
+    function getPool(uint256 poolId) external view returns (Pool memory) {
+        require(_pools[poolId].poolId != 0, "Pool not found");
+        return _pools[poolId];
+    }
+
+    /**
+     * @dev Get total pools
+     */
+    function totalPools() external view returns (uint256) {
+        return _poolIdCounter.current();
     }
 }

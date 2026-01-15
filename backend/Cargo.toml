@@ -14,6 +14,10 @@ jsonwebtoken = "9"
 ethers-core = "2"
 thiserror = "1"
 dotenvy = "0.15"
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "chrono", "uuid", "tls-rustls"] }
+bcrypt = "0.15"
+rand = "0.8"
 
 [profile.release]
 opt-level = 3

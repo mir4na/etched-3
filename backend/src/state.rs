@@ -1,57 +1,31 @@
-//! Application state and storage
+//! Application state
 
-use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
+use std::collections::HashMap;
+use std::sync::Mutex;
 
 use crate::config::Config;
-use crate::models::{RequestRecord, ValidatorProfile};
 
-/// In-memory data store
-#[derive(Default)]
-pub struct Store {
-    pub nonces: HashMap<String, String>,
-    pub validators: HashMap<String, ValidatorProfile>,
-    pub requests: HashMap<String, RequestRecord>,
-    pub admins: HashSet<String>,
-}
-
-impl Store {
-    /// Create store with admin addresses from config
-    pub fn with_admins(admins: HashSet<String>) -> Self {
-        Self {
-            admins,
-            ..Default::default()
-        }
-    }
-}
-
-/// Shared application state
 #[derive(Clone)]
 pub struct AppState {
-    pub store: Arc<Mutex<Store>>,
     pub config: Config,
+    pub db: PgPool,
+    pub nonces: std::sync::Arc<Mutex<HashMap<String, String>>>,
 }
 
 impl AppState {
-    /// Create new application state
-    pub fn new(config: Config) -> Self {
-        let store = Store::with_admins(config.admin_addresses.clone());
-        Self {
-            store: Arc::new(Mutex::new(store)),
-            config,
-        }
-    }
+    pub async fn new(config: Config) -> Self {
+        let db = PgPoolOptions::new()
+            .max_connections(10)
+            .connect(&config.database_url)
+            .await
+            .expect("Failed to connect to database");
 
-    /// Resolve user role based on address
-    pub fn resolve_role(&self, address: &str) -> String {
-        let store = self.store.lock().unwrap();
-        
-        if store.admins.contains(address) {
-            return "admin".into();
+        Self {
+            config,
+            db,
+            nonces: std::sync::Arc::new(Mutex::new(HashMap::new())),
         }
-        if store.validators.contains_key(address) {
-            return "validator".into();
-        }
-        "certificator".into()
     }
 }

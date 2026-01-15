@@ -1,6 +1,6 @@
 .container {
   position: fixed;
-  top: 24px;
+  top: 80px;
   right: 24px;
   z-index: 1000;
   display: flex;
@@ -14,12 +14,13 @@
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  background: rgba(18, 18, 26, 0.95);
   backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   animation: slideIn 0.3s ease-out;
   border-left: 4px solid;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toast.exit {
@@ -27,19 +28,19 @@
 }
 
 .success {
-  border-left-color: #10b981;
+  border-left: 4px solid #22c55e;
 }
 
 .error {
-  border-left-color: #ef4444;
+  border-left: 4px solid #ef4444;
 }
 
 .info {
-  border-left-color: #3b82f6;
+  border-left: 4px solid #8b5cf6;
 }
 
 .warning {
-  border-left-color: #f59e0b;
+  border-left: 4px solid #f97316;
 }
 
 .icon {
@@ -55,7 +56,7 @@
 }
 
 .success .icon {
-  background: #10b981;
+  background: #22c55e;
   color: white;
 }
 
@@ -65,19 +66,19 @@
 }
 
 .info .icon {
-  background: #3b82f6;
+  background: #8b5cf6;
   color: white;
 }
 
 .warning .icon {
-  background: #f59e0b;
+  background: #f97316;
   color: white;
 }
 
 .message {
   flex: 1;
   font-size: 0.9rem;
-  color: #1f2937;
+  color: #ffffff;
   line-height: 1.4;
 }
 
@@ -85,7 +86,7 @@
   background: none;
   border: none;
   font-size: 18px;
-  color: #9ca3af;
+  color: #71717a;
   cursor: pointer;
   padding: 4px;
   line-height: 1;
@@ -93,7 +94,7 @@
 }
 
 .close:hover {
-  color: #4b5563;
+  color: #ffffff;
 }
 
 @keyframes slideIn {
@@ -101,6 +102,7 @@
     opacity: 0;
     transform: translateX(100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -112,6 +114,7 @@
     opacity: 1;
     transform: translateX(0);
   }
+
   to {
     opacity: 0;
     transform: translateX(100%);

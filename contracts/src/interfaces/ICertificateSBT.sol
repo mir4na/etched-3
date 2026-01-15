@@ -48,6 +48,16 @@ interface ICertificateSBT {
         address validatedBy;
     }
 
+    struct Pool {
+        uint256 poolId;
+        string name;
+        string description;
+        address validator;
+        string institutionId;
+        bool isActive;
+        uint256 createdAt;
+    }
+
     // Events
     event ValidatorAdded(
         address indexed validator,
@@ -59,6 +69,13 @@ interface ICertificateSBT {
         address indexed validator,
         string institutionId,
         string institutionName
+    );
+
+    event PoolCreated(
+        uint256 indexed poolId,
+        address indexed validator,
+        string name,
+        uint256 feePaid
     );
 
     event CertificateRequested(
@@ -123,4 +140,19 @@ interface ICertificateSBT {
     function totalCertificates() external view returns (uint256);
 
     function totalRequests() external view returns (uint256);
+
+    // Pool functions
+    function createPool(
+        string memory name,
+        string memory description
+    ) external payable returns (uint256);
+
+    function getPool(uint256 poolId) external view returns (Pool memory);
+
+    function totalPools() external view returns (uint256);
+
+    // Admin functions
+    function setFeeReceiver(address _receiver) external;
+
+    function setPoolCreationFee(uint256 _fee) external;
 }

@@ -10,8 +10,9 @@ use crate::state::AppState;
 /// Authenticated user extracted from JWT
 #[derive(Debug, Clone)]
 pub struct AuthUser {
-    pub address: String,
-    pub role: String,
+    pub sub: String,       // user_id or wallet_address
+    pub role: String,      // "admin" | "validator" | "certificator"
+    pub auth_type: String, // "email" | "wallet"
 }
 
 impl FromRequest for AuthUser {
@@ -44,8 +45,9 @@ impl FromRequest for AuthUser {
             .map_err(|_| ApiError::Unauthorized)?;
 
             Ok(AuthUser {
-                address: token_data.claims.sub,
+                sub: token_data.claims.sub,
                 role: token_data.claims.role,
+                auth_type: token_data.claims.auth_type,
             })
         })
     }

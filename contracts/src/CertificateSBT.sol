@@ -15,7 +15,7 @@ import "./core/CertificateLogic.sol";
  * - CertificateLogic: Handles certificate request -> approval -> minting
  * - CertificateSBT: Main contract with soulbound enforcement
  */
-contract CertificateSBT is ERC721, CertificateLogic {
+contract CertificateSBT is CertificateLogic {
     constructor() ERC721("Certificate Soulbound Token", "CERT-SBT") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -32,36 +32,11 @@ contract CertificateSBT is ERC721, CertificateLogic {
         address to,
         uint256 tokenId,
         uint256 batchSize
-    ) internal virtual override {
+    ) internal virtual override(ERC721) {
         require(
             from == address(0),
             "Token is soulbound and cannot be transferred"
         );
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
-    }
-
-    // ============ Required Overrides ============
-
-    function _burn(
-        uint256 tokenId
-    ) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
-    }
-
-    function tokenURI(
-        uint256 tokenId
-    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    )
-        public
-        view
-        override(ERC721, ERC721URIStorage, AccessControl)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
     }
 }

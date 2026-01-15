@@ -1,22 +1,19 @@
 //! Etched Backend API
 //! 
 //! Backend service for the Etched certificate SBT platform.
-//! Provides authentication, validator management, certificate requests,
-//! and metadata hosting.
+//! Provides authentication, validator management, certificate pools,
+//! and certificate minting workflows.
 
 mod config;
+mod db;
 mod errors;
 mod handlers;
 mod middleware;
 mod models;
 mod state;
 
-#[cfg(test)]
-mod tests;
-
 use actix_cors::Cors;
 use actix_web::{get, web::Data, App, HttpResponse, HttpServer, Responder};
-use std::fs;
 
 use config::Config;
 use state::AppState;
@@ -34,16 +31,18 @@ async fn health() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     // Load configuration
     let config = Config::from_env();
-    
-    // Ensure metadata directory exists
-    fs::create_dir_all(&config.metadata_dir).ok();
-
     let bind_addr = config.bind_addr.clone();
-    let state = AppState::new(config);
+
+    // Initialize state with database
+    let state = AppState::new(config).await;
+
+    // Initialize database schema
+    db::init_db(&state.db).await.expect("Failed to initialize database");
 
     println!("🚀 Etched Backend starting...");
     println!("   Bind address: http://{}", bind_addr);
-    println!("   Admin addresses: {:?}", state.config.admin_addresses);
+    println!("   Admin wallet: {}", state.config.admin_wallet);
+    println!("   Pool cost: {} ETH", state.config.pool_cost_eth);
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -57,23 +56,30 @@ async fn main() -> std::io::Result<()> {
             // Health check
             .service(health)
             // Auth endpoints
-            .service(handlers::issue_nonce)
-            .service(handlers::verify_signature)
-            .service(handlers::get_profile)
-            // Validator management
-            .service(handlers::add_validator)
-            .service(handlers::remove_validator)
+            .service(handlers::login)
+            .service(handlers::register)
+            .service(handlers::get_nonce)
+            .service(handlers::verify_wallet)
+            .service(handlers::get_me)
+            .service(handlers::connect_wallet)
+            // Admin endpoints
+            .service(handlers::list_validator_requests)
+            .service(handlers::decide_validator_request)
             .service(handlers::list_validators)
-            .service(handlers::get_validator)
-            // Certificate requests
-            .service(handlers::my_requests)
-            .service(handlers::create_request)
-            .service(handlers::list_requests)
-            .service(handlers::get_request)
-            .service(handlers::decide_request)
-            // Metadata
-            .service(handlers::create_metadata)
-            .service(handlers::get_metadata)
+            .service(handlers::admin_stats)
+            // Pool endpoints
+            .service(handlers::pool_info)
+            .service(handlers::create_pool)
+            .service(handlers::get_pool)
+            .service(handlers::my_pools)
+            .service(handlers::toggle_pool)
+            // Certificate endpoints
+            .service(handlers::submit_certificate)
+            .service(handlers::list_pool_certificates)
+            .service(handlers::decide_certificate)
+            .service(handlers::my_certificates)
+            .service(handlers::verify_certificate)
+            .service(handlers::public_stats)
     })
     .bind(&bind_addr)?
     .run()
