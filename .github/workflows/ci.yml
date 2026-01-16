@@ -109,9 +109,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          NEXT_PUBLIC_API_BASE: {API_BASE}
-          NEXT_PUBLIC_CONTRACT_ADDRESS: {CONTRACT_ADDRESS}
-          NEXT_PUBLIC_CHAIN_ID: {CHAIN_ID}
+          NEXT_PUBLIC_API_BASE: "${{ secrets.API_BASE }}"
+          NEXT_PUBLIC_CONTRACT_ADDRESS: "${{ secrets.CONTRACT_ADDRESS }}"
+          NEXT_PUBLIC_CHAIN_ID: "${{ secrets.CHAIN_ID }}"
 
   security:
     name: Security Audit
