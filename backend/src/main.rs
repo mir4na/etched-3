@@ -67,12 +67,12 @@ async fn main() -> std::io::Result<()> {
             .service(handlers::decide_validator_request)
             .service(handlers::list_validators)
             .service(handlers::admin_stats)
-            // Pool endpoints
+            // Pool endpoints (order matters! specific routes before parameterized)
             .service(handlers::pool_info)
-            .service(handlers::create_pool)
-            .service(handlers::get_pool)
             .service(handlers::my_pools)
+            .service(handlers::create_pool)
             .service(handlers::toggle_pool)
+            .service(handlers::get_pool)
             // Certificate endpoints
             .service(handlers::submit_certificate)
             .service(handlers::list_pool_certificates)

@@ -21,8 +21,10 @@ const Icons = {
   X: (p: IconProps) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>),
   Plus: (p: IconProps) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>),
   Loader: (p: IconProps) => (<svg style={{ animation: 'spin 1.5s linear infinite' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>),
+  Eye: (p: IconProps) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>),
   Clock: (p: IconProps) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>),
   Wallet: (p: IconProps) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" /></svg>),
+  Back: (p: IconProps) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>),
 };
 
 // --- TYPES ---
@@ -49,6 +51,8 @@ export default function Home() {
   // Validator data
   const [myPools, setMyPools] = useState<any[]>([]);
   const [poolInfo, setPoolInfo] = useState<any>(null);
+  const [selectedPool, setSelectedPool] = useState<any>(null);
+  const [poolCertificates, setPoolCertificates] = useState<any[]>([]);
 
   // Certificator data
   const [myCertificates, setMyCertificates] = useState<any[]>([]);
@@ -199,10 +203,30 @@ export default function Home() {
     setLoading(false);
   };
 
+  const switchNetwork = async () => {
+    if (!provider) return;
+    try {
+      await provider.send("wallet_switchEthereumChain", [{ chainId: "0xaa36a7" }]);
+    } catch (err: any) {
+      if (err.code === 4902 || err?.info?.error?.code === 4902) {
+        try {
+          await provider.send("wallet_addEthereumChain", [{
+            chainId: "0xaa36a7",
+            chainName: "Sepolia Testnet",
+            nativeCurrency: { name: "SepoliaETH", symbol: "ETH", decimals: 18 },
+            rpcUrls: ["https://rpc.sepolia.org"],
+            blockExplorerUrls: ["https://sepolia.etherscan.io"]
+          }]);
+        } catch (e) { console.error(e); }
+      }
+    }
+  };
+
   const handleConnectWallet = async () => {
     if (!provider) return addToast("Wallet required", "error");
     setLoading(true);
     try {
+      await switchNetwork();
       const acc = await provider.send("eth_requestAccounts", []);
       await api.connectWallet(token, acc[0]);
       setWallet(acc[0].toLowerCase());
@@ -227,16 +251,18 @@ export default function Home() {
   const handleCreatePool = async () => {
     if (!formData.pool_name) return addToast("Pool name required", "warning");
     if (!wallet) return addToast("Connect wallet first", "warning");
-    if (!provider || !poolInfo) return;
+    if (!provider) return addToast("Wallet provider not found", "error");
 
     setLoading(true);
     try {
+      await switchNetwork();
       const signer = await provider.getSigner();
       const contract = getContract(signer);
+      const cost = poolInfo?.pool_cost_eth || "0.1";
 
       // Call createPool on contract
       const tx = await contract.createPool(formData.pool_name, formData.pool_description || "", {
-        value: ethers.parseEther(poolInfo.pool_cost_eth.toString())
+        value: ethers.parseEther(cost.toString())
       });
       await tx.wait();
 
@@ -334,6 +360,74 @@ export default function Home() {
     } catch {
       setVerifyResult(null);
       addToast("Verification failed", "error");
+    }
+    setLoading(false);
+  };
+
+  // Load certificates for a pool
+  const loadPoolCertificates = async (pool: any) => {
+    setSelectedPool(pool);
+    setLoading(true);
+    try {
+      const certs = await api.listPoolCertificates(token, pool.pool.code);
+      setPoolCertificates(certs);
+    } catch (err: any) {
+      addToast(err.message || "Failed to load certificates", "error");
+    }
+    setLoading(false);
+  };
+
+  // Approve certificate and mint
+  const handleApproveCertificate = async (cert: any) => {
+    if (!provider) return addToast("Wallet required", "error");
+    setLoading(true);
+    try {
+      const signer = await provider.getSigner();
+      const contract = getContract(signer);
+
+      // Call smart contract to mint - using submitCertificateRequest then approve
+      const tx = await contract.submitCertificateRequest(
+        cert.recipient_wallet,
+        cert.document_hash,
+        cert.metadata_uri || "",
+        validatorRequest?.institution_id || "",
+        cert.certificate_type
+      );
+      const receipt = await tx.wait();
+
+      // Get token ID from event
+      const event = receipt.logs.find((log: any) => log.fragment?.name === "CertificateRequested");
+      const tokenId = event ? Number(event.args[0]) : 1;
+
+      // Update backend
+      await api.decideCertificate(token, cert.id, {
+        approve: true,
+        tx_hash: tx.hash,
+        token_id: tokenId
+      });
+
+      addToast("Certificate approved and minted!", "success");
+      loadPoolCertificates(selectedPool);
+      loadData();
+    } catch (err: any) {
+      addToast(err.message || "Failed to approve", "error");
+    }
+    setLoading(false);
+  };
+
+  // Reject certificate
+  const handleRejectCertificate = async (cert: any, reason: string) => {
+    setLoading(true);
+    try {
+      await api.decideCertificate(token, cert.id, {
+        approve: false,
+        rejection_reason: reason || "Rejected by validator"
+      });
+      addToast("Certificate rejected", "success");
+      loadPoolCertificates(selectedPool);
+      loadData();
+    } catch (err: any) {
+      addToast(err.message || "Failed to reject", "error");
     }
     setLoading(false);
   };
@@ -503,16 +597,19 @@ export default function Home() {
               {pendingRequests.length === 0 ? (
                 <p style={{ color: "var(--c-text-mid)" }}>No pending requests</p>
               ) : (
-                <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+                <div className="request-grid">
                   {pendingRequests.map((r: any, i: number) => (
-                    <div key={i} style={{ padding: 16, background: "rgba(255,255,255,0.05)", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{r.user.username} - {r.request.institution_name}</div>
-                        <div style={{ fontSize: "0.8rem", color: "var(--c-text-mid)" }}>{r.user.email}</div>
+                    <div key={i} className="request-card">
+                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #eee", paddingBottom: 8, marginBottom: 4 }}>
+                        <div style={{ fontWeight: 800 }}>{r.user.username}</div>
+                        <div style={{ fontSize: "0.7rem", color: "#888" }}>ID: {r.request.id}</div>
                       </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button className="btn-primary" style={{ padding: "8px 16px" }} onClick={() => handleDecideValidator(r.request.id, true)} disabled={loading}><Icons.Check width={14} /></button>
-                        <button className="btn-outline" style={{ padding: "8px 16px" }} onClick={() => handleDecideValidator(r.request.id, false)} disabled={loading}><Icons.X width={14} /></button>
+                      <div style={{ fontSize: "0.9rem" }}>{r.request.institution_name}</div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--c-text-mid)", fontFamily: "monospace" }}>{r.user.email}</div>
+
+                      <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+                        <button className="btn-primary" style={{ padding: "8px", flex: 1, fontSize: "0.8rem" }} onClick={() => handleDecideValidator(r.request.id, true)} disabled={loading}>APPROVE</button>
+                        <button className="btn-outline" style={{ padding: "8px", flex: 1, fontSize: "0.8rem", marginTop: 0 }} onClick={() => handleDecideValidator(r.request.id, false)} disabled={loading}>REJECT</button>
                       </div>
                     </div>
                   ))}
@@ -525,85 +622,177 @@ export default function Home() {
 
       {/* === VALIDATOR DASHBOARD === */}
       {section === "dashboard" && role === "validator" && (
-        <div className="dashboard">
-          <div className="dash-grid">
-            <div className="paper-card col-4 accent">
-              <div className="card-eyebrow">validator</div>
-              <div style={{ fontSize: "1rem", fontStyle: "italic" }}>{userData?.username}</div>
-              <div style={{ fontSize: "0.75rem", opacity: 0.8, marginTop: 4 }}>{validatorRequest?.institution_name}</div>
+        <div className="validator-dashboard">
+          {/* Header */}
+          <div className="vd-header">
+            <div className="vd-header-info">
+              <div className="vd-avatar">{userData?.username?.charAt(0).toUpperCase()}</div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{userData?.username}</div>
+                <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>{validatorRequest?.institution_name}</div>
+              </div>
             </div>
-            <div className="paper-card col-4">
-              <div className="card-eyebrow">status</div>
-              <div className="card-value" style={{ fontSize: "1.5rem", color: validatorRequest?.status === "approved" ? "#8FC88F" : "#F0C868" }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              {wallet ? (
+                <div className="vd-wallet-badge">
+                  <Icons.Wallet width={14} /> {wallet.slice(0, 8)}...{wallet.slice(-4)}
+                </div>
+              ) : (
+                <button className="btn-primary" style={{ padding: "8px 16px", marginTop: 0 }} onClick={handleConnectWallet} disabled={loading}>
+                  <Icons.Wallet width={14} /> Connect
+                </button>
+              )}
+              <div className="status-badge" style={{ background: validatorRequest?.status === "approved" ? "#8FC88F" : "#F0C868" }}>
                 {validatorRequest?.status || "pending"}
               </div>
             </div>
-            <div className="paper-card col-4">
-              <div className="card-eyebrow">wallet</div>
-              {wallet ? (
-                <div style={{ fontSize: "0.85rem" }}>{wallet.slice(0, 10)}...</div>
-              ) : (
-                <button className="btn-primary" style={{ marginTop: 8 }} onClick={handleConnectWallet} disabled={loading}>
-                  <Icons.Wallet width={14} style={{ marginRight: 6 }} /> connect
+          </div>
+
+          {validatorRequest?.status === "pending" && (
+            <div className="vd-pending">
+              <Icons.Clock width={64} style={{ color: "#F0C868", marginBottom: 20 }} />
+              <h2 style={{ marginBottom: 8 }}>Awaiting Admin Approval</h2>
+              <p style={{ opacity: 0.7 }}>Your validator request is being reviewed. Please wait for admin approval.</p>
+            </div>
+          )}
+
+          {validatorRequest?.status === "approved" && !selectedPool && (
+            <div className="vd-content">
+              {/* Stats Row */}
+              <div className="vd-stats">
+                <div className="vd-stat-card">
+                  <div className="vd-stat-value">{myPools.length}</div>
+                  <div className="vd-stat-label">Pools</div>
+                </div>
+                <div className="vd-stat-card">
+                  <div className="vd-stat-value">{myPools.reduce((acc, p) => acc + p.pending_certificates, 0)}</div>
+                  <div className="vd-stat-label">Pending Certs</div>
+                </div>
+                <div className="vd-stat-card">
+                  <div className="vd-stat-value">{myPools.reduce((acc, p) => acc + p.minted_certificates, 0)}</div>
+                  <div className="vd-stat-label">Minted</div>
+                </div>
+                <button className="vd-create-btn" onClick={() => setShowModal("createPool")} disabled={!wallet || loading}>
+                  <Icons.Plus width={20} />
+                  <span>Create Pool</span>
+                  <small>{poolInfo?.pool_cost_eth || 0.1} ETH</small>
                 </button>
+              </div>
+
+              {/* Pools Grid */}
+              <div className="vd-section-header">
+                <h3>Your Pools</h3>
+                <button onClick={loadData} style={{ background: "none", border: "none", cursor: "pointer" }}>
+                  <Icons.Loader width={16} />
+                </button>
+              </div>
+
+              {myPools.length === 0 ? (
+                <div className="vd-empty">
+                  <p>No pools yet. Create your first pool to start accepting certificates.</p>
+                </div>
+              ) : (
+                <div className="vd-pools-grid">
+                  {myPools.map((p: any, i: number) => (
+                    <div key={i} className="vd-pool-card" onClick={() => loadPoolCertificates(p)}>
+                      <div className="vd-pool-header">
+                        <span className="vd-pool-code">{p.pool.code}</span>
+                        <span className={`vd-pool-status ${p.pool.is_active ? "active" : ""}`}>
+                          {p.pool.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                      <div className="vd-pool-name">{p.pool.name}</div>
+                      <div className="vd-pool-stats">
+                        <div><strong>{p.pending_certificates}</strong> pending</div>
+                        <div><strong>{p.minted_certificates}</strong> minted</div>
+                      </div>
+                      <div className="vd-pool-action">
+                        <Icons.Eye width={14} /> View Certificates
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
+          )}
 
-            {validatorRequest?.status === "approved" && (
-              <>
-                <div className="paper-card col-6">
-                  <div className="card-eyebrow">create pool</div>
-                  <p style={{ color: "var(--c-text-mid)", fontSize: "0.85rem", marginBottom: 12 }}>
-                    Create a certificate pool. Cost: {poolInfo?.pool_cost_eth || 0.1} ETH
-                  </p>
-                  <button className="btn-primary" onClick={() => setShowModal("createPool")} disabled={!wallet || loading}>
-                    <Icons.Plus width={14} style={{ marginRight: 6 }} /> create pool
-                  </button>
-                </div>
-                <div className="paper-card col-6">
-                  <div className="card-eyebrow">my pools</div>
-                  <div className="card-value">{myPools.length}</div>
-                </div>
+          {/* Pool Detail View */}
+          {validatorRequest?.status === "approved" && selectedPool && (
+            <div className="vd-content">
+              <button className="vd-back-btn" onClick={() => { setSelectedPool(null); setPoolCertificates([]); }}>
+                <Icons.Back width={16} /> Back to Pools
+              </button>
 
-                <div className="paper-card col-12">
-                  <div className="card-eyebrow">pools</div>
-                  {myPools.length === 0 ? (
-                    <p style={{ color: "var(--c-text-mid)" }}>No pools yet</p>
-                  ) : (
-                    <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-                      {myPools.map((p: any, i: number) => (
-                        <div key={i} style={{ padding: 16, background: "rgba(255,255,255,0.05)", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <div style={{ fontWeight: 600 }}>{p.pool.name}</div>
-                            <div style={{ fontSize: "0.9rem", color: "var(--c-orange)", fontFamily: "monospace" }}>{p.pool.code}</div>
-                          </div>
-                          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                            <div style={{ textAlign: "right" }}>
-                              <div style={{ fontSize: "0.75rem", color: "var(--c-text-mid)" }}>pending</div>
-                              <div style={{ fontWeight: 600 }}>{p.pending_certificates}</div>
-                            </div>
-                            <div style={{ textAlign: "right" }}>
-                              <div style={{ fontSize: "0.75rem", color: "var(--c-text-mid)" }}>minted</div>
-                              <div style={{ fontWeight: 600 }}>{p.minted_certificates}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              <div className="vd-pool-detail-header">
+                <div>
+                  <span className="vd-pool-code" style={{ fontSize: "1.5rem" }}>{selectedPool.pool.code}</span>
+                  <h2 style={{ margin: "8px 0" }}>{selectedPool.pool.name}</h2>
                 </div>
-              </>
-            )}
-
-            {validatorRequest?.status === "pending" && (
-              <div className="paper-card col-12">
-                <div style={{ textAlign: "center", padding: 40 }}>
-                  <Icons.Clock width={48} style={{ color: "var(--c-orange)", marginBottom: 16 }} />
-                  <h3 style={{ fontStyle: "italic", marginBottom: 8 }}>Awaiting Approval</h3>
-                  <p style={{ color: "var(--c-text-mid)" }}>Your validator request is being reviewed by admin.</p>
+                <div className="vd-pool-stats" style={{ flexDirection: "row", gap: 24 }}>
+                  <div><strong>{selectedPool.pending_certificates}</strong> pending</div>
+                  <div><strong>{selectedPool.minted_certificates}</strong> minted</div>
                 </div>
               </div>
-            )}
+
+              <div className="vd-section-header">
+                <h3>Certificates</h3>
+                <button onClick={() => loadPoolCertificates(selectedPool)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+                  <Icons.Loader width={16} />
+                </button>
+              </div>
+
+              {poolCertificates.length === 0 ? (
+                <div className="vd-empty">
+                  <p>No certificates submitted to this pool yet.</p>
+                </div>
+              ) : (
+                <div className="vd-certs-list">
+                  {poolCertificates.map((cert: any, i: number) => (
+                    <div key={i} className={`vd-cert-card ${cert.status}`}>
+                      <div className="vd-cert-header">
+                        <div>
+                          <div className="vd-cert-type">{cert.certificate_type}</div>
+                          <div className="vd-cert-recipient">{cert.recipient_name}</div>
+                        </div>
+                        <span className={`vd-cert-status ${cert.status}`}>{cert.status}</span>
+                      </div>
+                      <div className="vd-cert-details">
+                        <div><strong>Wallet:</strong> {cert.recipient_wallet.slice(0, 10)}...{cert.recipient_wallet.slice(-6)}</div>
+                        <div><strong>Hash:</strong> {cert.document_hash.slice(0, 16)}...</div>
+                      </div>
+                      {cert.status === "pending" && (
+                        <div className="vd-cert-actions">
+                          <button className="btn-approve" onClick={() => handleApproveCertificate(cert)} disabled={loading}>
+                            <Icons.Check width={14} /> Approve & Mint
+                          </button>
+                          <button className="btn-reject" onClick={() => handleRejectCertificate(cert, "")} disabled={loading}>
+                            <Icons.X width={14} /> Reject
+                          </button>
+                        </div>
+                      )}
+                      {cert.status === "minted" && cert.tx_hash && (
+                        <a href={`https://sepolia.etherscan.io/tx/${cert.tx_hash}`} target="_blank" rel="noopener noreferrer" className="vd-cert-link">
+                          View on Etherscan →
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === VALIDATOR REJECTED === */}
+      {section === "dashboard" && role === "validator" && validatorRequest?.status === "rejected" && (
+        <div className="dashboard">
+          <div className="paper-card">
+            <div style={{ textAlign: "center", padding: 40 }}>
+              <Icons.X width={48} style={{ color: "#C88F8F", marginBottom: 16 }} />
+              <h3 style={{ fontStyle: "italic", marginBottom: 8 }}>Request Rejected</h3>
+              <p style={{ color: "var(--c-text-mid)" }}>Your validator request has been rejected by admin.</p>
+            </div>
           </div>
         </div>
       )}
@@ -657,20 +846,28 @@ export default function Home() {
               {myCertificates.length === 0 ? (
                 <p style={{ color: "var(--c-text-mid)" }}>No certificates submitted yet</p>
               ) : (
-                <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+                <div className="request-grid">
                   {myCertificates.map((c: any, i: number) => (
-                    <div key={i} style={{ padding: 16, background: "rgba(255,255,255,0.05)", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{c.certificate.certificate_type}</div>
-                        <div style={{ fontSize: "0.8rem", color: "var(--c-text-mid)" }}>Pool: {c.pool_code}</div>
+                    <div key={i} className="request-card">
+                      <div className="card-eyebrow" style={{ marginBottom: 8 }}>{c.certificate.certificate_type}</div>
+                      <p style={{ fontSize: "0.9rem", marginBottom: 4 }}>Pool: <strong style={{ fontFamily: "monospace", fontSize: "1rem" }}>{c.pool_code}</strong></p>
+
+                      <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span className="status-badge" style={{
+                          background: c.certificate.status === "minted" ? "#8FC88F" : c.certificate.status === "rejected" ? "#C88F8F" : "#F0C868",
+                          color: "black",
+                          border: "2px solid black",
+                          fontSize: "0.75rem",
+                          padding: "2px 8px"
+                        }}>
+                          {c.certificate.status}
+                        </span>
+                        {c.certificate.tx_hash && (
+                          <a href={`https://sepolia.etherscan.io/tx/${c.certificate.tx_hash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.7rem", textDecoration: "underline", color: "black" }}>
+                            View TX
+                          </a>
+                        )}
                       </div>
-                      <span style={{
-                        padding: "4px 12px", borderRadius: 20, fontSize: "0.7rem", fontWeight: 600,
-                        background: c.certificate.status === "minted" ? "rgba(100,180,100,0.2)" : c.certificate.status === "rejected" ? "rgba(180,100,100,0.2)" : "rgba(200,180,100,0.2)",
-                        color: c.certificate.status === "minted" ? "#8FC88F" : c.certificate.status === "rejected" ? "#C88F8F" : "#C8B88F"
-                      }}>
-                        {c.certificate.status}
-                      </span>
                     </div>
                   ))}
                 </div>
@@ -695,7 +892,13 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button className="btn-outline" style={{ flex: 1, marginTop: 0 }} onClick={() => setShowModal("")}>cancel</button>
-              <button className="btn-primary" style={{ flex: 1, marginTop: 0 }} onClick={handleCreatePool} disabled={loading}>{loading ? <Icons.Loader width={16} /> : `pay & create`}</button>
+              <button className="btn-primary" style={{ flex: 1, marginTop: 0 }} onClick={handleCreatePool} disabled={loading}>
+                {loading ? (
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    <Icons.Loader width={16} /> PROCESSING...
+                  </span>
+                ) : "PAY & CREATE"}
+              </button>
             </div>
           </div>
         </div>
@@ -725,7 +928,13 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button className="btn-outline" style={{ flex: 1, marginTop: 0 }} onClick={() => setShowModal("")}>cancel</button>
-              <button className="btn-primary" style={{ flex: 1, marginTop: 0 }} onClick={handleSubmitCertificate} disabled={loading}>{loading ? <Icons.Loader width={16} /> : "submit"}</button>
+              <button className="btn-primary" style={{ flex: 1, marginTop: 0 }} onClick={handleSubmitCertificate} disabled={loading}>
+                {loading ? (
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    <Icons.Loader width={16} /> PROCESSING...
+                  </span>
+                ) : "SUBMIT"}
+              </button>
             </div>
           </div>
         </div>
