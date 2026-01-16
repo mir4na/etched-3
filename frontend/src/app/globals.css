@@ -197,8 +197,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0;
   margin-bottom: 20px;
+  width: 100%;
+  text-align: center;
 }
 
 /* "THE" and "IS ON-CHAIN" */
@@ -210,6 +213,8 @@ body {
   color: var(--c-black);
   text-transform: uppercase;
   letter-spacing: -0.04em;
+  text-align: center;
+  width: 100%;
 }
 
 /* "TRUTH" Box */
@@ -1155,7 +1160,7 @@ select:focus {
     align-items: flex-start;
   }
 
-  .vd-header > div:last-child {
+  .vd-header>div:last-child {
     width: 100%;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -1270,21 +1275,31 @@ select:focus {
     min-height: auto;
   }
 
+  .hero-title-wrapper {
+    width: 100%;
+    padding: 0 8px;
+  }
+
   .hero-text-black,
   .hero-text-purple {
-    font-size: clamp(2rem, 12vw, 4rem);
+    font-size: clamp(1.8rem, 11vw, 3.5rem);
+    text-align: center;
+    width: 100%;
+    word-break: break-word;
   }
 
   .truth-box {
     padding: 0 12px;
     margin: 8px 0;
     box-shadow: 4px 4px 0 var(--c-black);
+    transform: rotate(-1deg);
   }
 
   .hero-subtitle {
     font-size: 0.7rem;
-    padding: 6px;
+    padding: 6px 12px;
     max-width: 100%;
+    text-align: center;
   }
 
   .hero-cta {
@@ -1339,7 +1354,7 @@ select:focus {
     box-shadow: 4px 4px 0 var(--c-black);
   }
 
-  .vd-header > div:last-child {
+  .vd-header>div:last-child {
     gap: 10px;
   }
 
@@ -1479,7 +1494,7 @@ select:focus {
     box-shadow: 3px 3px 0 #ddd;
   }
 
-  .request-card > div:last-child {
+  .request-card>div:last-child {
     flex-direction: column;
     gap: 8px;
   }
@@ -1492,7 +1507,9 @@ select:focus {
   }
 
   /* iOS auto-zoom prevention - inputs must be 16px */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     padding: 12px;
     font-size: 16px;
   }
@@ -1638,11 +1655,11 @@ select:focus {
     gap: 10px;
   }
 
-  .vd-header-info > div > div:first-child {
+  .vd-header-info>div>div:first-child {
     font-size: 1rem;
   }
 
-  .vd-header-info > div > div:last-child {
+  .vd-header-info>div>div:last-child {
     font-size: 0.7rem;
   }
 
@@ -1805,7 +1822,9 @@ select:focus {
     font-size: 1.1rem;
   }
 
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     padding: 10px;
   }
 
@@ -1902,6 +1921,7 @@ select:focus {
 
 /* Touch-friendly improvements */
 @media (hover: none) and (pointer: coarse) {
+
   .btn-brutal,
   .btn-primary,
   .btn-outline,
@@ -1932,6 +1952,7 @@ select:focus {
 
 /* Print Styles */
 @media print {
+
   .navbar,
   .floating-shape,
   .dot-canvas,
