@@ -1,11 +1,6 @@
-
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-
-
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -14,11 +9,10 @@ pub struct User {
     #[serde(skip_serializing)]
     pub password_hash: String,
     pub username: String,
-    pub role: String, 
+    pub role: String,
     pub wallet_address: Option<String>,
     pub created_at: DateTime<Utc>,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ValidatorRequest {
@@ -27,13 +21,12 @@ pub struct ValidatorRequest {
     pub institution_name: String,
     pub institution_id: String,
     pub document_url: Option<String>,
-    pub status: String, 
+    pub status: String,
     pub reviewed_by: Option<i32>,
     pub reviewed_at: Option<DateTime<Utc>>,
     pub rejection_reason: Option<String>,
     pub created_at: DateTime<Utc>,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Pool {
@@ -47,7 +40,6 @@ pub struct Pool {
     pub created_at: DateTime<Utc>,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Certificate {
     pub id: i32,
@@ -58,7 +50,7 @@ pub struct Certificate {
     pub certificate_type: String,
     pub document_hash: String,
     pub metadata_uri: Option<String>,
-    pub status: String, 
+    pub status: String,
     pub token_id: Option<i32>,
     pub tx_hash: Option<String>,
     pub validated_at: Option<DateTime<Utc>>,
@@ -67,18 +59,13 @@ pub struct Certificate {
     pub created_at: DateTime<Utc>,
 }
 
-
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String, 
+    pub sub: String,
     pub role: String,
-    pub auth_type: String, 
+    pub auth_type: String,
     pub exp: usize,
 }
-
-
-
 
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {
@@ -86,14 +73,12 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct LoginResponse {
     pub token: String,
     pub role: String,
     pub user: UserPublic,
 }
-
 
 #[derive(Debug, Serialize)]
 pub struct UserPublic {
@@ -116,7 +101,6 @@ impl From<User> for UserPublic {
     }
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
     pub email: String,
@@ -127,12 +111,10 @@ pub struct RegisterRequest {
     pub document_url: Option<String>,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct NonceRequest {
     pub address: String,
 }
-
 
 #[derive(Debug, Serialize)]
 pub struct NonceResponse {
@@ -140,13 +122,11 @@ pub struct NonceResponse {
     pub message: String,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct VerifyWalletRequest {
     pub address: String,
     pub signature: String,
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct CreatePoolRequest {
@@ -154,7 +134,6 @@ pub struct CreatePoolRequest {
     pub description: Option<String>,
     pub tx_hash: String,
 }
-
 
 #[derive(Debug, Serialize)]
 pub struct PoolResponse {
@@ -168,7 +147,6 @@ pub struct PoolResponse {
     pub created_at: DateTime<Utc>,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct SubmitCertificateRequest {
     pub recipient_name: String,
@@ -178,7 +156,6 @@ pub struct SubmitCertificateRequest {
     pub metadata_uri: Option<String>,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct CertificateDecisionRequest {
     pub approve: bool,
@@ -187,13 +164,11 @@ pub struct CertificateDecisionRequest {
     pub rejection_reason: Option<String>,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct ValidatorDecisionRequest {
     pub approve: bool,
     pub rejection_reason: Option<String>,
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct ConnectWalletRequest {

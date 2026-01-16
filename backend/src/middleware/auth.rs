@@ -1,5 +1,3 @@
-
-
 use actix_web::{web::Data, FromRequest, HttpRequest};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 
@@ -7,12 +5,11 @@ use crate::errors::ApiError;
 use crate::models::Claims;
 use crate::state::AppState;
 
-
 #[derive(Debug, Clone)]
 pub struct AuthUser {
-    pub sub: String,       
-    pub role: String,      
-    pub auth_type: String, 
+    pub sub: String,
+    pub role: String,
+    pub auth_type: String,
 }
 
 impl FromRequest for AuthUser {
@@ -25,7 +22,7 @@ impl FromRequest for AuthUser {
             .get("Authorization")
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string());
-        
+
         let jwt_secret = req
             .app_data::<Data<AppState>>()
             .map(|s| s.config.jwt_secret.clone());
@@ -34,9 +31,9 @@ impl FromRequest for AuthUser {
             let token = auth_header
                 .and_then(|header| header.strip_prefix("Bearer ").map(|s| s.to_string()))
                 .ok_or(ApiError::Unauthorized)?;
-            
+
             let secret = jwt_secret.ok_or(ApiError::Internal)?;
-            
+
             let token_data = decode::<Claims>(
                 &token,
                 &DecodingKey::from_secret(secret.as_bytes()),

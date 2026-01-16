@@ -1,11 +1,8 @@
-
-
 use sqlx::PgPool;
 
-
 pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
-    
-    sqlx::query(r#"
+    sqlx::query(
+        r#"
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
             email VARCHAR(255) UNIQUE NOT NULL,
@@ -15,11 +12,13 @@ pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
             wallet_address VARCHAR(42),
             created_at TIMESTAMPTZ DEFAULT NOW()
         )
-    "#)
+    "#,
+    )
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"
+    sqlx::query(
+        r#"
         CREATE TABLE IF NOT EXISTS validator_requests (
             id SERIAL PRIMARY KEY,
             user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -32,11 +31,13 @@ pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
             rejection_reason TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW()
         )
-    "#)
+    "#,
+    )
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"
+    sqlx::query(
+        r#"
         CREATE TABLE IF NOT EXISTS pools (
             id SERIAL PRIMARY KEY,
             code VARCHAR(20) UNIQUE NOT NULL,
@@ -47,11 +48,13 @@ pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
             is_active BOOLEAN DEFAULT true,
             created_at TIMESTAMPTZ DEFAULT NOW()
         )
-    "#)
+    "#,
+    )
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"
+    sqlx::query(
+        r#"
         CREATE TABLE IF NOT EXISTS certificates (
             id SERIAL PRIMARY KEY,
             pool_id INTEGER REFERENCES pools(id) ON DELETE CASCADE,
@@ -69,26 +72,26 @@ pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
             rejection_reason TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW()
         )
-    "#)
+    "#,
+    )
     .execute(pool)
     .await?;
 
-    
-    let admin_exists: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM users WHERE email = 'admin@admin.com'"
-    )
-    .fetch_one(pool)
-    .await?;
+    let admin_exists: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM users WHERE email = 'admin@admin.com'")
+            .fetch_one(pool)
+            .await?;
 
     if admin_exists.0 == 0 {
-        
-        let password_hash = bcrypt::hash("admin123", bcrypt::DEFAULT_COST)
-            .expect("Failed to hash password");
+        let password_hash =
+            bcrypt::hash("admin123", bcrypt::DEFAULT_COST).expect("Failed to hash password");
 
-        sqlx::query(r#"
+        sqlx::query(
+            r#"
             INSERT INTO users (email, password_hash, username, role)
             VALUES ('admin@admin.com', $1, 'admin', 'admin')
-        "#)
+        "#,
+        )
         .bind(&password_hash)
         .execute(pool)
         .await?;

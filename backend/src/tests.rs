@@ -1,8 +1,7 @@
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     mod config_tests {
         use crate::config::Config;
         use std::env;
@@ -10,14 +9,14 @@ mod tests {
         #[test]
         fn test_config_lifecycle() {
             // Run sequentially to avoid env var race conditions
-            
+
             // 1. Test Defaults (forced to specific values to avoid .env interference)
             env::set_var("DATABASE_URL", "postgres://test:test@localhost/test");
             env::set_var("JWT_SECRET", "forced-default-secret");
             env::set_var("ADMIN_WALLET", "0xdefault");
             env::set_var("BIND_ADDR", "0.0.0.0:8080");
             env::set_var("POOL_COST_ETH", "0.1");
-            
+
             let config = Config::from_env();
             assert_eq!(config.jwt_secret, "forced-default-secret");
             assert_eq!(config.bind_addr, "0.0.0.0:8080");
@@ -28,7 +27,7 @@ mod tests {
             env::set_var("ADMIN_WALLET", "0xadmin");
             env::set_var("BIND_ADDR", "127.0.0.1:9999");
             env::set_var("POOL_COST_ETH", "0.5");
-            
+
             let config2 = Config::from_env();
             assert_eq!(config2.jwt_secret, "test-secret-custom");
             assert_eq!(config2.bind_addr, "127.0.0.1:9999");

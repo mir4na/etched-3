@@ -1,11 +1,9 @@
-
-
-pub mod auth;
 pub mod admin;
-pub mod pools;
+pub mod auth;
 pub mod certificates;
+pub mod pools;
 
-pub use auth::*;
 pub use admin::*;
-pub use pools::*;
+pub use auth::*;
 pub use certificates::*;
+pub use pools::*;
