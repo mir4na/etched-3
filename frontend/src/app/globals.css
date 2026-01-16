@@ -135,6 +135,12 @@ body {
   font-weight: 700;
   font-size: 1.1rem;
   letter-spacing: -0.02em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.nav-brand:hover {
+  opacity: 0.7;
 }
 
 .btn-connect {
@@ -305,6 +311,14 @@ body {
   text-decoration-color: var(--c-purple);
   text-decoration-thickness: 6px;
   text-underline-offset: 4px;
+}
+
+.card-value {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--c-purple);
 }
 
 /* Inputs */
@@ -1029,5 +1043,421 @@ select:focus {
 
   .vd-cert-actions {
     flex-direction: column;
+  }
+}
+
+/* =====================================================
+   CERTIFICATE DOCUMENT LINK - Validator View
+   ===================================================== */
+.vd-cert-document-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #f8f0ff 0%, #fff0f8 100%);
+  border: 2px dashed var(--c-purple);
+  color: var(--c-purple);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.vd-cert-document-link:hover {
+  background: var(--c-purple);
+  color: var(--c-white);
+  border-style: solid;
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0 var(--c-black);
+}
+
+/* =====================================================
+   ENHANCED RESPONSIVE DESIGN
+   ===================================================== */
+
+/* Extra Large Screens */
+@media (min-width: 1400px) {
+  .dashboard {
+    max-width: 1400px;
+  }
+
+  .validator-dashboard {
+    max-width: 1600px;
+  }
+}
+
+/* Large Tablets and Small Laptops */
+@media (max-width: 1024px) {
+  .navbar {
+    width: 95%;
+    padding: 0 20px;
+  }
+
+  .hero-text-black,
+  .hero-text-purple {
+    font-size: clamp(2.5rem, 8vw, 6rem);
+  }
+
+  .truth-box {
+    padding: 0 16px;
+  }
+
+  .dashboard {
+    padding: 110px 16px;
+  }
+
+  .paper-card {
+    padding: 24px;
+  }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+  }
+
+  .col-4 {
+    grid-column: span 6;
+  }
+
+  .col-12 {
+    grid-column: span 12;
+  }
+}
+
+/* Tablets */
+@media (max-width: 900px) {
+  .validator-dashboard {
+    padding: 110px 20px 20px;
+  }
+
+  .vd-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .vd-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .vd-pool-detail-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .hero-cta {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-brutal {
+    padding: 12px 20px;
+    font-size: 0.85rem;
+  }
+
+  .request-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .vd-pools-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .floating-shape {
+    display: none;
+  }
+}
+
+/* Mobile Devices */
+@media (max-width: 600px) {
+  .navbar {
+    width: 94%;
+    height: 54px;
+    padding: 0 16px;
+    top: 16px;
+  }
+
+  .nav-brand-text {
+    font-size: 0.9rem;
+  }
+
+  .btn-connect {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .hero {
+    padding: 80px 16px 40px;
+    min-height: auto;
+  }
+
+  .hero-text-black,
+  .hero-text-purple {
+    font-size: clamp(2rem, 12vw, 4rem);
+  }
+
+  .truth-box {
+    padding: 0 12px;
+    margin: 8px 0;
+  }
+
+  .hero-subtitle {
+    font-size: 0.7rem;
+    padding: 6px;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    width: 100%;
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .btn-brutal {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+  }
+
+  .dashboard {
+    padding: 90px 12px 20px;
+  }
+
+  .paper-card {
+    padding: 20px;
+    box-shadow: 4px 4px 0 var(--c-black);
+  }
+
+  .card-title {
+    font-size: 1.5rem;
+  }
+
+  .card-value {
+    font-size: 2rem;
+  }
+
+  .vd-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .vd-cert-actions {
+    flex-direction: column;
+  }
+
+  .validator-dashboard {
+    padding: 90px 12px 20px;
+  }
+
+  .vd-header {
+    padding: 16px;
+  }
+
+  .vd-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .vd-wallet-badge {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
+
+  .status-badge {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+  }
+
+  .vd-stat-card {
+    padding: 16px;
+  }
+
+  .vd-stat-value {
+    font-size: 2rem;
+  }
+
+  .vd-create-btn {
+    padding: 16px;
+  }
+
+  .vd-pool-card {
+    box-shadow: 3px 3px 0 var(--c-black);
+  }
+
+  .vd-cert-card {
+    padding: 16px;
+  }
+
+  .vd-cert-type {
+    font-size: 1rem;
+  }
+
+  .vd-cert-details {
+    font-size: 0.75rem;
+  }
+
+  .vd-cert-document-link {
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
+
+  .btn-approve,
+  .btn-reject {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 24px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .request-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .request-card {
+    padding: 14px;
+  }
+
+  input, select {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    padding: 14px 20px;
+    font-size: 0.9rem;
+  }
+
+  .col-4,
+  .col-12 {
+    grid-column: span 12;
+  }
+
+  .info-bar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .info-card {
+    padding: 10px 16px;
+  }
+}
+
+/* Extra Small Devices */
+@media (max-width: 380px) {
+  .navbar {
+    height: 50px;
+    padding: 0 12px;
+  }
+
+  .nav-brand-text {
+    font-size: 0.8rem;
+  }
+
+  .btn-connect {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+  }
+
+  .hero-text-black,
+  .hero-text-purple {
+    font-size: clamp(1.8rem, 14vw, 3rem);
+  }
+
+  .paper-card {
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+  }
+
+  .card-value {
+    font-size: 1.8rem;
+  }
+
+  .vd-header-info {
+    gap: 10px;
+  }
+
+  .vd-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+}
+
+/* Grid System for Dashboard */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+}
+
+.col-4 {
+  grid-column: span 4;
+}
+
+.col-12 {
+  grid-column: span 12;
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .btn-brutal,
+  .btn-primary,
+  .btn-outline,
+  .btn-connect,
+  .btn-approve,
+  .btn-reject,
+  .vd-create-btn,
+  .vd-pool-card {
+    min-height: 44px;
+  }
+
+  .vd-pool-card:hover,
+  .btn-brutal:hover,
+  .btn-primary:hover,
+  .btn-outline:hover {
+    transform: none;
+    box-shadow: 4px 4px 0 var(--c-black);
+  }
+
+  .vd-pool-card:active,
+  .btn-brutal:active,
+  .btn-primary:active,
+  .btn-outline:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--c-black);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .navbar,
+  .floating-shape,
+  .dot-canvas,
+  .btn-brutal,
+  .btn-primary,
+  .btn-outline,
+  .btn-connect {
+    display: none !important;
+  }
+
+  .dashboard,
+  .validator-dashboard {
+    padding: 20px;
+  }
+
+  .paper-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
   }
 }

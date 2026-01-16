@@ -1,9 +1,9 @@
-//! Error types and handling
+
 
 use actix_web::HttpResponse;
 use thiserror::Error;
 
-/// API error types
+
 #[derive(Debug, Error)]
 pub enum ApiError {
     #[error("Unauthorized")]

@@ -11,7 +11,7 @@ async function main() {
   await contract.waitForDeployment();
   const address = await contract.getAddress();
 
-  // Set initial fee receiver to deployer
+  
   const [deployer] = await hre.ethers.getSigners();
   console.log(`Setting fee receiver to ${deployer.address}...`);
   await contract.setFeeReceiver(deployer.address);
@@ -30,7 +30,7 @@ async function main() {
   fs.writeFileSync(deploymentPath, JSON.stringify(deploymentInfo, null, 2));
   console.log(`\n📄 Deployment info saved to ${deploymentPath}`);
 
-  // Update frontend .env.local
+  
   const frontendEnvPath = path.join(__dirname, "../../frontend/.env.local");
   try {
     const newContent = `NEXT_PUBLIC_CONTRACT_ADDRESS=${address}\nNEXT_PUBLIC_CHAIN_ID=11155111\nNEXT_PUBLIC_API_BASE=http://localhost:8080`;

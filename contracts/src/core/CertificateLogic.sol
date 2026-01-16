@@ -6,13 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./ValidatorRegistry.sol";
 
-/**
- * @title CertificateLogic
- * @dev Core certificate request and minting logic
- * @notice Handles the certificator -> validator -> minting workflow
- */
 abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
-    // Resolve conflict between ERC721URIStorage and AccessControl (via ValidatorRegistry)
     function supportsInterface(
         bytes4 interfaceId
     )
@@ -27,12 +21,10 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
 
     using Counters for Counters.Counter;
 
-    // Counters
     Counters.Counter internal _tokenIdCounter;
     Counters.Counter internal _requestIdCounter;
     Counters.Counter internal _poolIdCounter;
 
-    // Storage
     mapping(uint256 => CertificateRequest) internal _certificateRequests;
     mapping(uint256 => Certificate) internal _certificates;
     mapping(string => uint256) internal _hashToTokenId;
@@ -40,20 +32,9 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
     mapping(address => uint256[]) internal _recipientCertificates;
     mapping(uint256 => Pool) internal _pools;
 
-    // Config
     address public feeReceiver;
     uint256 public poolCreationFee = 0.1 ether;
 
-    // ============ Certificator Functions ============
-
-    /**
-     * @dev Submit a certificate request
-     * @param recipient Address of certificate recipient
-     * @param certificateHash Hash of certificate data
-     * @param metadataURI URI to certificate metadata
-     * @param institutionId Institution issuing the certificate
-     * @param certificateType Type of certificate
-     */
     function submitCertificateRequest(
         address recipient,
         string memory certificateHash,
@@ -66,6 +47,7 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         require(!_usedHashes[certificateHash], "Certificate hash already used");
         require(bytes(institutionId).length > 0, "Institution ID required");
 
+        _usedHashes[certificateHash] = true;
         _requestIdCounter.increment();
         uint256 requestId = _requestIdCounter.current();
 
@@ -95,8 +77,6 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         return requestId;
     }
 
-    // ============ Admin Config Functions ============
-
     function setFeeReceiver(address _receiver) external onlyRole(ADMIN_ROLE) {
         feeReceiver = _receiver;
     }
@@ -110,13 +90,6 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         require(success, "Withdraw failed");
     }
 
-    // ============ Validator Functions ============
-
-    /**
-     * @dev Create a new certificate pool
-     * @notice Anyone can create a pool by paying the fee
-     * @notice Validator verification is done off-chain
-     */
     function createPool(
         string memory name,
         string memory description
@@ -147,12 +120,6 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         return poolId;
     }
 
-    // ============ Validator Functions ============
-
-    /**
-     * @dev Approve a certificate request and mint SBT
-     * @param requestId ID of the certificate request
-     */
     function approveCertificate(
         uint256 requestId
     ) external onlyRole(VALIDATOR_ROLE) {
@@ -175,15 +142,9 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
 
         emit CertificateApproved(requestId, msg.sender, block.timestamp);
 
-        // Mint SBT
         _mintCertificate(requestId);
     }
 
-    /**
-     * @dev Reject a certificate request
-     * @param requestId ID of the certificate request
-     * @param reason Reason for rejection
-     */
     function rejectCertificate(
         uint256 requestId,
         string memory reason
@@ -206,14 +167,12 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         request.validatedBy = msg.sender;
         request.rejectionReason = reason;
 
+        // Clear hash usage so it can be resubmitted
+        _usedHashes[request.certificateHash] = false;
+
         emit CertificateRejected(requestId, msg.sender, reason);
     }
 
-    // ============ Internal Functions ============
-
-    /**
-     * @dev Mint certificate SBT
-     */
     function _mintCertificate(uint256 requestId) internal {
         CertificateRequest storage request = _certificateRequests[requestId];
 
@@ -248,11 +207,6 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         );
     }
 
-    // ============ View Functions ============
-
-    /**
-     * @dev Verify certificate by hash
-     */
     function verifyCertificateByHash(
         string memory certificateHash
     )
@@ -281,9 +235,6 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         );
     }
 
-    /**
-     * @dev Get certificate by token ID
-     */
     function getCertificate(
         uint256 tokenId
     ) external view returns (Certificate memory) {
@@ -291,9 +242,6 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         return _certificates[tokenId];
     }
 
-    /**
-     * @dev Get certificate request
-     */
     function getCertificateRequest(
         uint256 requestId
     ) external view returns (CertificateRequest memory) {
@@ -304,40 +252,25 @@ abstract contract CertificateLogic is ERC721URIStorage, ValidatorRegistry {
         return _certificateRequests[requestId];
     }
 
-    /**
-     * @dev Get all certificates for a recipient
-     */
     function getRecipientCertificates(
         address recipient
     ) external view returns (uint256[] memory) {
         return _recipientCertificates[recipient];
     }
 
-    /**
-     * @dev Get total minted certificates
-     */
     function totalCertificates() external view returns (uint256) {
         return _tokenIdCounter.current();
     }
 
-    /**
-     * @dev Get total certificate requests
-     */
     function totalRequests() external view returns (uint256) {
         return _requestIdCounter.current();
     }
 
-    /**
-     * @dev Get pool info
-     */
     function getPool(uint256 poolId) external view returns (Pool memory) {
         require(_pools[poolId].poolId != 0, "Pool not found");
         return _pools[poolId];
     }
 
-    /**
-     * @dev Get total pools
-     */
     function totalPools() external view returns (uint256) {
         return _poolIdCounter.current();
     }

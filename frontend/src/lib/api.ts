@@ -1,7 +1,5 @@
 const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080";
 
-// ============ Auth - Email/Password ============
-
 export async function login(email: string, password: string) {
   const res = await fetch(`${apiBase}/auth/login`, {
     method: "POST",
@@ -59,7 +57,7 @@ export async function connectWallet(token: string, walletAddress: string) {
   return res.json();
 }
 
-// ============ Auth - Wallet (Certificator) ============
+
 
 export async function getNonce(address: string) {
   const res = await fetch(`${apiBase}/auth/nonce`, {
@@ -84,7 +82,7 @@ export async function verifyWallet(address: string, signature: string) {
   return res.json();
 }
 
-// ============ Admin ============
+
 
 export async function listValidatorRequests(token: string) {
   const res = await fetch(`${apiBase}/admin/validator-requests`, {
@@ -123,7 +121,7 @@ export async function adminStats(token: string) {
   return res.json();
 }
 
-// ============ Pools ============
+
 
 export async function getPoolInfo() {
   const res = await fetch(`${apiBase}/pools/info`);
@@ -174,7 +172,7 @@ export async function togglePool(token: string, poolId: number) {
   return res.json();
 }
 
-// ============ Certificates ============
+
 
 export async function submitCertificate(token: string, poolCode: string, payload: {
   recipient_name: string;
@@ -244,7 +242,7 @@ export async function verifyCertificate(hash: string) {
   return res.json();
 }
 
-// ============ Public Stats ============
+
 
 export async function publicStats() {
   const res = await fetch(`${apiBase}/stats`);

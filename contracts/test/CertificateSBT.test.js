@@ -148,7 +148,7 @@ describe("CertificateSBT", function () {
             );
 
             const request = await contract.getCertificateRequest(1);
-            expect(request.status).to.equal(0); // Pending
+            expect(request.status).to.equal(0); 
             expect(request.recipient).to.equal(recipient.address);
             expect(request.certificator).to.equal(certificator.address);
         });
@@ -160,10 +160,10 @@ describe("CertificateSBT", function () {
         const CERT_TYPE = "diploma";
 
         beforeEach(async function () {
-            // Setup validator
+            
             await contract.addValidator(validator.address, INSTITUTION_ID, INSTITUTION_NAME);
 
-            // Submit request
+            
             await contract.connect(certificator).submitCertificateRequest(
                 recipient.address,
                 CERT_HASH,
@@ -189,7 +189,7 @@ describe("CertificateSBT", function () {
         });
 
         it("Should not allow validator from different institution", async function () {
-            // Add validator for different institution
+            
             await contract.addValidator(admin.address, "INST-999", "Other University");
 
             await expect(
@@ -231,7 +231,7 @@ describe("CertificateSBT", function () {
                 .withArgs(1, validator.address, REJECTION_REASON);
 
             const request = await contract.getCertificateRequest(1);
-            expect(request.status).to.equal(2); // Rejected
+            expect(request.status).to.equal(2); 
             expect(request.rejectionReason).to.equal(REJECTION_REASON);
         });
 

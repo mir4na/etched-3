@@ -1,10 +1,10 @@
-//! Database initialization and migrations
+
 
 use sqlx::PgPool;
 
-/// Initialize database schema
+
 pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // Create tables
+    
     sqlx::query(r#"
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -73,7 +73,7 @@ pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // Seed admin user if not exists
+    
     let admin_exists: (i64,) = sqlx::query_as(
         "SELECT COUNT(*) FROM users WHERE email = 'admin@admin.com'"
     )
@@ -81,7 +81,7 @@ pub async fn init_db(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     if admin_exists.0 == 0 {
-        // Hash: "admin123" with bcrypt
+        
         let password_hash = bcrypt::hash("admin123", bcrypt::DEFAULT_COST)
             .expect("Failed to hash password");
 

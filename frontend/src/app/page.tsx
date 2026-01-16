@@ -5,9 +5,9 @@ import { ethers } from "ethers";
 import * as api from "@/lib/api";
 import { getContract } from "@/lib/contract";
 import { ToastContainer, useToast } from "@/components/Toast";
-import { uploadToIPFS } from "@/lib/ipfs";
+import { uploadToIPFS, getGatewayUrl } from "@/lib/ipfs";
 
-// --- SVG ICONS ---
+
 type IconProps = React.SVGProps<SVGSVGElement>;
 const Icons = {
   Logo: (p: IconProps) => (
@@ -27,11 +27,11 @@ const Icons = {
   Back: (p: IconProps) => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>),
 };
 
-// --- TYPES ---
+
 type Section = "home" | "login" | "register" | "dashboard" | "verify" | "certificator";
 type Role = "" | "admin" | "validator" | "certificator";
 
-// --- MAIN ---
+
 export default function Home() {
   const [section, setSection] = useState<Section>("home");
   const [role, setRole] = useState<Role>("");
@@ -39,29 +39,29 @@ export default function Home() {
   const [wallet, setWallet] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // User data
+
   const [userData, setUserData] = useState<any>(null);
   const [validatorRequest, setValidatorRequest] = useState<any>(null);
   const [stats, setStats] = useState({ total_validators: 0, total_pools: 0, total_certificates: 0 });
 
-  // Admin data
+
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [validators, setValidators] = useState<any[]>([]);
 
-  // Validator data
+
   const [myPools, setMyPools] = useState<any[]>([]);
   const [poolInfo, setPoolInfo] = useState<any>(null);
   const [selectedPool, setSelectedPool] = useState<any>(null);
   const [poolCertificates, setPoolCertificates] = useState<any[]>([]);
 
-  // Certificator data
+
   const [myCertificates, setMyCertificates] = useState<any[]>([]);
   const [poolCode, setPoolCode] = useState("");
   const [currentPool, setCurrentPool] = useState<any>(null);
 
-  // Forms
+
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [showModal, setShowModal] = useState<"" | "createPool" | "submitCert" | "viewCerts">("");
+  const [showModal, setShowModal] = useState<"" | "createPool" | "submitCert" | "viewCerts" | "managePool">("");
   const [verifyHash, setVerifyHash] = useState("");
   const [verifyResult, setVerifyResult] = useState<any>(null);
 
@@ -72,7 +72,7 @@ export default function Home() {
     return new ethers.BrowserProvider((window as any).ethereum);
   }, []);
 
-  // Load public stats
+
   const loadStats = useCallback(async () => {
     try {
       const s = await api.publicStats();
@@ -80,7 +80,7 @@ export default function Home() {
     } catch { }
   }, []);
 
-  // Load data based on role
+
   const loadData = useCallback(async () => {
     if (!token) return;
     try {
@@ -112,7 +112,7 @@ export default function Home() {
   useEffect(() => { loadStats(); }, [loadStats]);
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Restore session
+
   useEffect(() => {
     const t = localStorage.getItem("etched_token");
     const r = localStorage.getItem("etched_role") as Role;
@@ -128,7 +128,7 @@ export default function Home() {
   const [registerFile, setRegisterFile] = useState<File | null>(null);
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
 
-  // === ACTIONS ===
+
   const handleLogin = async () => {
     if (!formData.email || !formData.password) return addToast("Fill all fields", "warning");
     setLoading(true);
@@ -184,7 +184,7 @@ export default function Home() {
       const acc = await provider.send("eth_requestAccounts", []);
       const address = acc[0].toLowerCase();
       const { nonce } = await api.getNonce(address);
-      // Construct message manually to ensure exact match with backend
+
       const message = `Login to Etched: ${nonce}`;
       const signer = await provider.getSigner();
       const sig = await signer.signMessage(message);
@@ -260,13 +260,13 @@ export default function Home() {
       const contract = getContract(signer);
       const cost = poolInfo?.pool_cost_eth || "0.1";
 
-      // Call createPool on contract
+
       const tx = await contract.createPool(formData.pool_name, formData.pool_description || "", {
         value: ethers.parseEther(cost.toString())
       });
       await tx.wait();
 
-      // Create pool in backend
+
       const res = await api.createPool(token, {
         name: formData.pool_name,
         description: formData.pool_description,
@@ -309,7 +309,7 @@ export default function Home() {
         metaUri = await uploadToIPFS(certificateFile);
       }
 
-      // Generate document hash
+
       const dataToHash = JSON.stringify({
         recipient: formData.recipient_wallet,
         name: formData.recipient_name,
@@ -350,6 +350,95 @@ export default function Home() {
     setLoading(false);
   };
 
+  const handleManagePool = async (code: string) => {
+    setLoading(true);
+    try {
+      const pool = await api.getPool(code);
+      setSelectedPool(pool);
+
+      const certs = await api.listPoolCertificates(token, code, "pending");
+      setPoolCertificates(certs);
+      setShowModal("managePool");
+    } catch (err: any) {
+      addToast(err.message || "Failed to load pool details", "error");
+    }
+    setLoading(false);
+  };
+
+  const handleApproveCert = async (cert: any) => {
+    if (!wallet) return addToast("Connect wallet", "warning");
+    if (!provider) return addToast("Wallet provider not found", "error");
+    setLoading(true);
+    try {
+      await switchNetwork();
+      const signer = await provider.getSigner();
+      const contract = getContract(signer);
+
+
+
+      const tx1 = await contract.submitCertificateRequest(
+        cert.recipient_wallet,
+        cert.document_hash,
+        cert.metadata_uri || "",
+        validatorRequest?.institution_id || "INST",
+        cert.certificate_type
+      );
+      const receipt1 = await tx1.wait();
+
+
+      const event = receipt1.logs.find((log: any) => log.fragment?.name === "CertificateRequested");
+
+      let requestId = 0;
+
+      if (event && event.args) {
+        requestId = event.args[0];
+      } else {
+
+
+
+
+      }
+
+
+      if (!requestId) throw new Error("Could not parse Request ID from tx");
+
+      const tx2 = await contract.approveCertificate(requestId);
+      const receipt2 = await tx2.wait();
+
+
+      const mintEvent = receipt2.logs.find((log: any) => log.fragment?.name === "CertificateMinted");
+      const tokenId = mintEvent ? mintEvent.args[0] : 0;
+
+
+      await api.decideCertificate(token, cert.id, {
+        approve: true,
+        tx_hash: tx2.hash,
+        token_id: Number(tokenId)
+      });
+
+      addToast("Certificate Approved & Minted!", "success");
+      setShowModal("");
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || "Approval failed", "error");
+    }
+    setLoading(false);
+  };
+
+  const handleRejectCert = async (certId: number) => {
+    setLoading(true);
+    try {
+      await api.decideCertificate(token, certId, { approve: false, rejection_reason: "Rejected by Validator" });
+      addToast("Certificate Rejected", "success");
+      setShowModal("");
+      loadData();
+    } catch (err: any) {
+      addToast(err.message, "error");
+    }
+    setLoading(false);
+  };
+
   const handleVerify = async () => {
     if (!verifyHash) return addToast("Enter hash", "warning");
     setLoading(true);
@@ -364,7 +453,7 @@ export default function Home() {
     setLoading(false);
   };
 
-  // Load certificates for a pool
+
   const loadPoolCertificates = async (pool: any) => {
     setSelectedPool(pool);
     setLoading(true);
@@ -377,7 +466,7 @@ export default function Home() {
     setLoading(false);
   };
 
-  // Approve certificate and mint
+
   const handleApproveCertificate = async (cert: any) => {
     if (!provider) return addToast("Wallet required", "error");
     setLoading(true);
@@ -385,7 +474,7 @@ export default function Home() {
       const signer = await provider.getSigner();
       const contract = getContract(signer);
 
-      // Call smart contract to mint - using submitCertificateRequest then approve
+
       const tx = await contract.submitCertificateRequest(
         cert.recipient_wallet,
         cert.document_hash,
@@ -395,11 +484,11 @@ export default function Home() {
       );
       const receipt = await tx.wait();
 
-      // Get token ID from event
+
       const event = receipt.logs.find((log: any) => log.fragment?.name === "CertificateRequested");
       const tokenId = event ? Number(event.args[0]) : 1;
 
-      // Update backend
+
       await api.decideCertificate(token, cert.id, {
         approve: true,
         tx_hash: tx.hash,
@@ -415,7 +504,7 @@ export default function Home() {
     setLoading(false);
   };
 
-  // Reject certificate
+
   const handleRejectCertificate = async (cert: any, reason: string) => {
     setLoading(true);
     try {
@@ -432,20 +521,20 @@ export default function Home() {
     setLoading(false);
   };
 
-  // === RENDER ===
+
   return (
     <div>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Background */}
+      { }
       <div className="dot-canvas">
         <div className="dot-pattern" />
         <div className="floating-shape shape-cyan" />
         <div className="floating-shape shape-purple" />
       </div>
 
-      {/* Navbar */}
-      {/* Navbar: Floating Pill */}
+      { }
+      { }
       <nav className="navbar">
         <div className="nav-brand" onClick={() => setSection(token ? "dashboard" : "home")}>
           <Icons.Logo width={20} style={{ color: "black" }} />
@@ -460,14 +549,12 @@ export default function Home() {
           <div style={{ display: "flex", gap: 10 }}>
             {section !== "home" && <button className="btn-connect" onClick={() => setSection("home")}>HOME</button>}
             <button className="btn-connect" onClick={() => setSection("login")}>LOGIN</button>
-            {/* <button className="btn-connect" style={{ background: "black", color: "white" }} onClick={handleCertificatorLogin}>
-              CONNECT
-            </button> */}
+            { }
           </div>
         )}
       </nav>
 
-      {/* === HOME === */}
+      { }
       {section === "home" && (
         <div className="hero">
           <div className="hero-title-wrapper">
@@ -489,7 +576,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === LOGIN === */}
+      { }
       {section === "login" && (
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
           <div className="paper-card" style={{ maxWidth: 420, width: "90%" }}>
@@ -508,7 +595,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === REGISTER === */}
+      { }
       {section === "register" && (
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
           <div className="paper-card" style={{ maxWidth: 520, width: "90%" }}>
@@ -532,7 +619,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === VERIFY === */}
+      { }
       {section === "verify" && (
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
           <div className="paper-card" style={{ maxWidth: 600, width: "90%" }}>
@@ -562,7 +649,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === CERTIFICATOR LOGIN (If not logged in) === */}
+      { }
       {section === "certificator" && role !== "certificator" && (
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
           <div className="paper-card" style={{ maxWidth: 420, width: "90%", textAlign: "center" }}>
@@ -575,7 +662,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === ADMIN DASHBOARD === */}
+      { }
       {section === "dashboard" && role === "admin" && (
         <div className="dashboard">
           <div className="dash-grid">
@@ -605,7 +692,13 @@ export default function Home() {
                         <div style={{ fontSize: "0.7rem", color: "#888" }}>ID: {r.request.id}</div>
                       </div>
                       <div style={{ fontSize: "0.9rem" }}>{r.request.institution_name}</div>
-                      <div style={{ fontSize: "0.8rem", color: "var(--c-text-mid)", fontFamily: "monospace" }}>{r.user.email}</div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--c-text-mid)", fontFamily: "monospace", marginBottom: 6 }}>{r.user.email}</div>
+
+                      {r.request.document_url && (
+                        <a href={getGatewayUrl(r.request.document_url)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.8rem", color: "var(--c-purple)", textDecoration: "underline", marginBottom: 12, display: "inline-block" }}>
+                          <Icons.File width={12} style={{ marginRight: 4 }} /> View Proof Document
+                        </a>
+                      )}
 
                       <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
                         <button className="btn-primary" style={{ padding: "8px", flex: 1, fontSize: "0.8rem" }} onClick={() => handleDecideValidator(r.request.id, true)} disabled={loading}>APPROVE</button>
@@ -620,10 +713,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* === VALIDATOR DASHBOARD === */}
+      { }
       {section === "dashboard" && role === "validator" && (
         <div className="validator-dashboard">
-          {/* Header */}
+          { }
           <div className="vd-header">
             <div className="vd-header-info">
               <div className="vd-avatar">{userData?.username?.charAt(0).toUpperCase()}</div>
@@ -658,7 +751,7 @@ export default function Home() {
 
           {validatorRequest?.status === "approved" && !selectedPool && (
             <div className="vd-content">
-              {/* Stats Row */}
+              { }
               <div className="vd-stats">
                 <div className="vd-stat-card">
                   <div className="vd-stat-value">{myPools.length}</div>
@@ -679,7 +772,7 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Pools Grid */}
+              { }
               <div className="vd-section-header">
                 <h3>Your Pools</h3>
                 <button onClick={loadData} style={{ background: "none", border: "none", cursor: "pointer" }}>
@@ -716,7 +809,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Pool Detail View */}
+          { }
           {validatorRequest?.status === "approved" && selectedPool && (
             <div className="vd-content">
               <button className="vd-back-btn" onClick={() => { setSelectedPool(null); setPoolCertificates([]); }}>
@@ -759,6 +852,11 @@ export default function Home() {
                       <div className="vd-cert-details">
                         <div><strong>Wallet:</strong> {cert.recipient_wallet.slice(0, 10)}...{cert.recipient_wallet.slice(-6)}</div>
                         <div><strong>Hash:</strong> {cert.document_hash.slice(0, 16)}...</div>
+                        {cert.metadata_uri && (
+                          <a href={getGatewayUrl(cert.metadata_uri)} target="_blank" rel="noopener noreferrer" className="vd-cert-document-link">
+                            <Icons.File width={14} /> View Certificate Document
+                          </a>
+                        )}
                       </div>
                       {cert.status === "pending" && (
                         <div className="vd-cert-actions">
@@ -784,7 +882,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === VALIDATOR REJECTED === */}
+      { }
       {section === "dashboard" && role === "validator" && validatorRequest?.status === "rejected" && (
         <div className="dashboard">
           <div className="paper-card">
@@ -797,7 +895,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === CERTIFICATOR === */}
+      { }
       {(section === "dashboard" || section === "certificator") && role === "certificator" && (
         <div className="dashboard">
           <div className="dash-grid">
@@ -851,6 +949,13 @@ export default function Home() {
                     <div key={i} className="request-card">
                       <div className="card-eyebrow" style={{ marginBottom: 8 }}>{c.certificate.certificate_type}</div>
                       <p style={{ fontSize: "0.9rem", marginBottom: 4 }}>Pool: <strong style={{ fontFamily: "monospace", fontSize: "1rem" }}>{c.pool_code}</strong></p>
+                      <p
+                        style={{ fontSize: "0.8rem", color: "#666", marginBottom: 8, fontFamily: "monospace", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                        onClick={() => { navigator.clipboard.writeText(c.certificate.document_hash); addToast("Hash copied!", "success"); }}
+                        title="Click to copy Document Hash"
+                      >
+                        <Icons.File width={12} /> {c.certificate.document_hash.slice(0, 10)}... <span style={{ fontSize: "0.7rem", textDecoration: "underline" }}>COPY</span>
+                      </p>
 
                       <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span className="status-badge" style={{
@@ -877,7 +982,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* === MODALS === */}
+      { }
       {showModal === "createPool" && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -900,6 +1005,45 @@ export default function Home() {
                 ) : "PAY & CREATE"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showModal === "managePool" && selectedPool && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: 700 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 className="card-title" style={{ marginBottom: 0 }}>Manage Pool: {selectedPool.code}</h3>
+              <button onClick={() => setShowModal("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-black)" }}><Icons.X width={24} /></button>
+            </div>
+
+            <h4 style={{ marginBottom: 12 }}>Pending Certificates ({poolCertificates.length})</h4>
+
+            {poolCertificates.length === 0 ? (
+              <p style={{ color: "#888" }}>No pending certificates.</p>
+            ) : (
+              <div className="request-grid">
+                {poolCertificates.map((c: any, i: number) => (
+                  <div key={i} className="request-card">
+                    <div className="card-eyebrow" style={{ marginBottom: 4 }}>{c.certificate_type}</div>
+                    <div style={{ fontWeight: 700, fontSize: "1rem" }}>{c.recipient_name}</div>
+                    <div style={{ fontSize: "0.8rem", color: "#666", fontFamily: "monospace", marginBottom: 8 }}>{c.recipient_wallet}</div>
+
+                    {c.metadata_uri && (
+                      <a href={getGatewayUrl(c.metadata_uri)} target="_blank" rel="noopener noreferrer"
+                        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", color: "var(--c-purple)", fontWeight: 700, marginTop: 8, marginBottom: 16, border: "1px dashed var(--c-purple)", padding: 8, borderRadius: 4 }}>
+                        <Icons.File width={14} /> View File (IPFS)
+                      </a>
+                    )}
+
+                    <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+                      <button className="btn-primary" style={{ padding: 8, flex: 1, fontSize: "0.8rem" }} onClick={() => handleApproveCert(c)} disabled={loading}>APPROVE</button>
+                      <button className="btn-outline" style={{ padding: 8, flex: 1, fontSize: "0.8rem", marginTop: 0 }} onClick={() => handleRejectCert(c.id)} disabled={loading}>REJECT</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

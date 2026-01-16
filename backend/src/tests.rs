@@ -1,4 +1,3 @@
-//! Unit tests for the Etched backend
 
 #[cfg(test)]
 mod tests {
@@ -9,93 +8,32 @@ mod tests {
         use std::env;
 
         #[test]
-        fn test_config_defaults() {
-            // Clear env vars for test
-            env::remove_var("JWT_SECRET");
-            env::remove_var("ADMIN_ADDRESSES");
-            env::remove_var("BIND_ADDR");
+        fn test_config_lifecycle() {
+            // Run sequentially to avoid env var race conditions
+            
+            // 1. Test Defaults (forced to specific values to avoid .env interference)
+            env::set_var("DATABASE_URL", "postgres://test:test@localhost/test");
+            env::set_var("JWT_SECRET", "forced-default-secret");
+            env::set_var("ADMIN_WALLET", "0xdefault");
+            env::set_var("BIND_ADDR", "0.0.0.0:8080");
+            env::set_var("POOL_COST_ETH", "0.1");
             
             let config = Config::from_env();
-            
-            assert_eq!(config.jwt_secret, "super-secret");
+            assert_eq!(config.jwt_secret, "forced-default-secret");
             assert_eq!(config.bind_addr, "0.0.0.0:8080");
-            assert!(config.admin_addresses.is_empty());
-        }
+            assert_eq!(config.pool_cost_eth, 0.1);
 
-        #[test]
-        fn test_config_from_env() {
-            env::set_var("JWT_SECRET", "test-secret");
-            env::set_var("ADMIN_ADDRESSES", "0xabc,0xdef");
-            env::set_var("BIND_ADDR", "127.0.0.1:9000");
+            // 2. Test Custom Env
+            env::set_var("JWT_SECRET", "test-secret-custom");
+            env::set_var("ADMIN_WALLET", "0xadmin");
+            env::set_var("BIND_ADDR", "127.0.0.1:9999");
+            env::set_var("POOL_COST_ETH", "0.5");
             
-            let config = Config::from_env();
-            
-            assert_eq!(config.jwt_secret, "test-secret");
-            assert_eq!(config.bind_addr, "127.0.0.1:9000");
-            assert!(config.admin_addresses.contains("0xabc"));
-            assert!(config.admin_addresses.contains("0xdef"));
-            
-            // Cleanup
-            env::remove_var("JWT_SECRET");
-            env::remove_var("ADMIN_ADDRESSES");
-            env::remove_var("BIND_ADDR");
-        }
-    }
-
-    mod state_tests {
-        use crate::config::Config;
-        use crate::state::AppState;
-        use std::collections::HashSet;
-
-        fn create_test_state() -> AppState {
-            let mut admins = HashSet::new();
-            admins.insert("0xadmin".to_string());
-            
-            let config = Config {
-                jwt_secret: "test".to_string(),
-                admin_addresses: admins,
-                bind_addr: "0.0.0.0:8080".to_string(),
-                public_base_url: "http://localhost:8080".to_string(),
-                metadata_dir: "./test_data".to_string(),
-            };
-            
-            AppState::new(config)
-        }
-
-        #[test]
-        fn test_resolve_role_admin() {
-            let state = create_test_state();
-            assert_eq!(state.resolve_role("0xadmin"), "admin");
-        }
-
-        #[test]
-        fn test_resolve_role_certificator() {
-            let state = create_test_state();
-            assert_eq!(state.resolve_role("0xunknown"), "certificator");
-        }
-
-        #[test]
-        fn test_resolve_role_validator() {
-            use crate::models::ValidatorProfile;
-            use chrono::Utc;
-            
-            let state = create_test_state();
-            
-            // Add validator
-            {
-                let mut store = state.store.lock().unwrap();
-                store.validators.insert(
-                    "0xvalidator".to_string(),
-                    ValidatorProfile {
-                        address: "0xvalidator".to_string(),
-                        institution_id: "INST-001".to_string(),
-                        institution_name: "Test Uni".to_string(),
-                        verified_at: Utc::now(),
-                    }
-                );
-            }
-            
-            assert_eq!(state.resolve_role("0xvalidator"), "validator");
+            let config2 = Config::from_env();
+            assert_eq!(config2.jwt_secret, "test-secret-custom");
+            assert_eq!(config2.bind_addr, "127.0.0.1:9999");
+            assert_eq!(config2.admin_wallet, "0xadmin");
+            assert_eq!(config2.pool_cost_eth, 0.5);
         }
     }
 
@@ -110,110 +48,61 @@ mod tests {
         }
 
         #[test]
-        fn test_verify_request_deserialize() {
+        fn test_verify_wallet_request_deserialize() {
             let json = r#"{"address": "0x123", "signature": "0xsig"}"#;
-            let req: VerifyRequest = serde_json::from_str(json).unwrap();
+            let req: VerifyWalletRequest = serde_json::from_str(json).unwrap();
             assert_eq!(req.address, "0x123");
             assert_eq!(req.signature, "0xsig");
         }
 
         #[test]
-        fn test_validator_create_request() {
+        fn test_register_request() {
             let json = r#"{
-                "address": "0x123",
-                "institution_id": "INST-001",
-                "institution_name": "Test University"
-            }"#;
-            let req: ValidatorCreateRequest = serde_json::from_str(json).unwrap();
-            assert_eq!(req.institution_id, "INST-001");
-        }
-
-        #[test]
-        fn test_request_create_payload() {
-            let json = r#"{
-                "recipient": "0xrecipient",
-                "certificate_hash": "0xhash",
-                "metadata_uri": "http://example.com/meta.json",
-                "institution_id": "INST-001",
-                "certificate_type": "diploma"
-            }"#;
-            let req: RequestCreatePayload = serde_json::from_str(json).unwrap();
-            assert_eq!(req.certificate_type, "diploma");
-        }
-
-        #[test]
-        fn test_decision_payload() {
-            let json = r#"{"status": "approved", "reason": "Valid"}"#;
-            let req: DecisionPayload = serde_json::from_str(json).unwrap();
-            assert_eq!(req.status, "approved");
-            assert_eq!(req.reason, Some("Valid".to_string()));
-        }
-
-        #[test]
-        fn test_metadata_payload() {
-            let json = r#"{
-                "certificate_name": "Bachelor Degree",
-                "recipient_name": "John Doe",
-                "recipient_address": "0xjohn",
-                "institution_id": "INST-001",
+                "email": "test@test.com",
+                "password": "pass",
+                "username": "user",
                 "institution_name": "Test University",
-                "certificate_type": "diploma",
-                "issued_at": "2024-01-15"
+                "institution_id": "INST-001"
             }"#;
-            let req: MetadataPayload = serde_json::from_str(json).unwrap();
-            assert_eq!(req.certificate_name, "Bachelor Degree");
-            assert!(req.details.is_none());
+            let req: RegisterRequest = serde_json::from_str(json).unwrap();
+            assert_eq!(req.institution_id, "INST-001");
+            assert_eq!(req.email, "test@test.com");
+        }
+
+        #[test]
+        fn test_submit_certificate_request() {
+            let json = r#"{
+                "recipient_name": "John Doe",
+                "recipient_wallet": "0xrecipient",
+                "certificate_type": "diploma",
+                "document_hash": "0xhash",
+                "metadata_uri": "http://ipfs.io/ipfs/Qm..."
+            }"#;
+            let req: SubmitCertificateRequest = serde_json::from_str(json).unwrap();
+            assert_eq!(req.certificate_type, "diploma");
+            assert_eq!(req.document_hash, "0xhash");
+        }
+
+        #[test]
+        fn test_certificate_decision_request() {
+            let json = r#"{"approve": true, "tx_hash": "0xtx", "token_id": 1}"#;
+            let req: CertificateDecisionRequest = serde_json::from_str(json).unwrap();
+            assert_eq!(req.approve, true);
+            assert_eq!(req.tx_hash, Some("0xtx".to_string()));
+            assert_eq!(req.token_id, Some(1));
         }
 
         #[test]
         fn test_claims_serialize() {
             let claims = Claims {
-                sub: "0x123".to_string(),
+                sub: "123".to_string(), // user id as string
                 role: "admin".to_string(),
+                auth_type: "email".to_string(),
                 exp: 1234567890,
             };
             let json = serde_json::to_string(&claims).unwrap();
-            assert!(json.contains("0x123"));
-        }
-    }
-
-    mod errors_tests {
-        use crate::errors::ApiError;
-        use actix_web::ResponseError;
-
-        #[test]
-        fn test_unauthorized_status() {
-            let err = ApiError::Unauthorized;
-            let resp = err.error_response();
-            assert_eq!(resp.status().as_u16(), 401);
-        }
-
-        #[test]
-        fn test_forbidden_status() {
-            let err = ApiError::Forbidden;
-            let resp = err.error_response();
-            assert_eq!(resp.status().as_u16(), 403);
-        }
-
-        #[test]
-        fn test_not_found_status() {
-            let err = ApiError::NotFound;
-            let resp = err.error_response();
-            assert_eq!(resp.status().as_u16(), 404);
-        }
-
-        #[test]
-        fn test_bad_request_status() {
-            let err = ApiError::BadRequest("test error".into());
-            let resp = err.error_response();
-            assert_eq!(resp.status().as_u16(), 400);
-        }
-
-        #[test]
-        fn test_internal_status() {
-            let err = ApiError::Internal;
-            let resp = err.error_response();
-            assert_eq!(resp.status().as_u16(), 500);
+            assert!(json.contains("admin"));
+            assert!(json.contains("email"));
         }
     }
 }

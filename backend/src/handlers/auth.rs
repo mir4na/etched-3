@@ -1,4 +1,4 @@
-//! Authentication handlers
+
 
 use actix_web::{get, post, web, HttpResponse, Responder};
 use chrono::Utc;
@@ -14,9 +14,9 @@ use crate::state::AppState;
 
 const SIGNING_MESSAGE_PREFIX: &str = "Login to Etched";
 
-// ============ Email/Password Auth ============
 
-/// Login with email/password (admin/validator)
+
+
 #[post("/auth/login")]
 pub async fn login(
     state: web::Data<AppState>,
@@ -24,7 +24,7 @@ pub async fn login(
 ) -> Result<impl Responder, ApiError> {
     let email = payload.email.to_lowercase();
 
-    // Find user
+    
     let user: User = sqlx::query_as(
         "SELECT * FROM users WHERE email = $1"
     )
@@ -34,7 +34,7 @@ pub async fn login(
     .map_err(|_| ApiError::Internal)?
     .ok_or(ApiError::Unauthorized)?;
 
-    // Verify password
+    
     let valid = bcrypt::verify(&payload.password, &user.password_hash)
         .map_err(|_| ApiError::Internal)?;
 
@@ -42,8 +42,8 @@ pub async fn login(
         return Err(ApiError::Unauthorized);
     }
 
-    // Generate JWT
-    let exp = (Utc::now().timestamp() + 60 * 60 * 24) as usize; // 24 hours
+    
+    let exp = (Utc::now().timestamp() + 60 * 60 * 24) as usize; 
     let claims = Claims {
         sub: user.id.to_string(),
         role: user.role.clone(),
@@ -65,7 +65,7 @@ pub async fn login(
     }))
 }
 
-/// Register as validator
+
 #[post("/auth/register")]
 pub async fn register(
     state: web::Data<AppState>,
@@ -73,7 +73,7 @@ pub async fn register(
 ) -> Result<impl Responder, ApiError> {
     let email = payload.email.to_lowercase();
 
-    // Check if email exists
+    
     let exists: (i64,) = sqlx::query_as(
         "SELECT COUNT(*) FROM users WHERE email = $1"
     )
@@ -86,11 +86,11 @@ pub async fn register(
         return Err(ApiError::BadRequest("Email already registered".into()));
     }
 
-    // Hash password
+    
     let password_hash = bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST)
         .map_err(|_| ApiError::Internal)?;
 
-    // Create user
+    
     let user: User = sqlx::query_as(r#"
         INSERT INTO users (email, password_hash, username, role)
         VALUES ($1, $2, $3, 'validator')
@@ -103,7 +103,7 @@ pub async fn register(
     .await
     .map_err(|_| ApiError::Internal)?;
 
-    // Create validator request
+    
     sqlx::query(r#"
         INSERT INTO validator_requests (user_id, institution_name, institution_id, document_url)
         VALUES ($1, $2, $3, $4)
@@ -122,9 +122,9 @@ pub async fn register(
     })))
 }
 
-// ============ Wallet Auth (Certificator) ============
 
-/// Get nonce for wallet signature
+
+
 #[post("/auth/nonce")]
 pub async fn get_nonce(
     state: web::Data<AppState>,
@@ -146,7 +146,7 @@ pub async fn get_nonce(
     Ok(HttpResponse::Ok().json(NonceResponse { nonce, message }))
 }
 
-/// Verify wallet signature (certificator login)
+
 #[post("/auth/verify-wallet")]
 pub async fn verify_wallet(
     state: web::Data<AppState>,
@@ -159,7 +159,7 @@ pub async fn verify_wallet(
         nonces.remove(&address)
             .ok_or_else(|| {
                 println!("Nonce not found for address: {}", address);
-                // Print all keys for debugging
+                
                 println!("Available keys: {:?}", nonces.keys());
                 ApiError::BadRequest(format!("Nonce not found for {}", address).into())
             })?
@@ -176,7 +176,7 @@ pub async fn verify_wallet(
         .recover(message_hash)
         .map_err(|e| ApiError::BadRequest(format!("Signature recovery failed: {}", e).into()))?;
     
-    // Use LowerHex to get full address, as Display implementation might truncate
+    
     let recovered_addr = format!("0x{:x}", recovered);
     println!("Recovered (len {}): {:?}", recovered_addr.len(), recovered_addr);
     println!("Expected  (len {}): {:?}", address.len(), address);
@@ -188,8 +188,8 @@ pub async fn verify_wallet(
         ).into()));
     }
 
-    // Generate JWT for certificator
-    let exp = (Utc::now().timestamp() + 60 * 60 * 12) as usize; // 12 hours
+    
+    let exp = (Utc::now().timestamp() + 60 * 60 * 12) as usize; 
     let claims = Claims {
         sub: address.clone(),
         role: "certificator".into(),
@@ -211,16 +211,16 @@ pub async fn verify_wallet(
     })))
 }
 
-// ============ Profile ============
 
-/// Get current user profile
+
+
 #[get("/auth/me")]
 pub async fn get_me(
     state: web::Data<AppState>,
     user: AuthUser,
 ) -> Result<impl Responder, ApiError> {
     if user.auth_type == "wallet" {
-        // Certificator - just return address
+        
         return Ok(HttpResponse::Ok().json(serde_json::json!({
             "address": user.sub,
             "role": "certificator",
@@ -228,7 +228,7 @@ pub async fn get_me(
         })));
     }
 
-    // Email user - fetch from DB
+    
     let user_id: i32 = user.sub.parse().map_err(|_| ApiError::Internal)?;
     let db_user: User = sqlx::query_as(
         "SELECT * FROM users WHERE id = $1"
@@ -239,7 +239,7 @@ pub async fn get_me(
     .map_err(|_| ApiError::Internal)?
     .ok_or(ApiError::NotFound)?;
 
-    // Get validator request status if validator
+    
     let request: Option<ValidatorRequest> = if db_user.role == "validator" {
         sqlx::query_as(
             "SELECT * FROM validator_requests WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1"
@@ -259,7 +259,7 @@ pub async fn get_me(
     })))
 }
 
-/// Connect wallet to validator account
+
 #[post("/auth/connect-wallet")]
 pub async fn connect_wallet(
     state: web::Data<AppState>,

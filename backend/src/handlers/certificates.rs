@@ -1,4 +1,4 @@
-//! Certificate handlers
+
 
 use actix_web::{get, post, web, HttpResponse, Responder};
 use chrono::Utc;
@@ -8,7 +8,7 @@ use crate::middleware::AuthUser;
 use crate::models::*;
 use crate::state::AppState;
 
-/// Submit certificate to pool (certificator only)
+
 #[post("/pools/{code}/certificates")]
 pub async fn submit_certificate(
     state: web::Data<AppState>,
@@ -23,7 +23,7 @@ pub async fn submit_certificate(
     let code = path.into_inner().to_uppercase();
     let wallet = user.sub.to_lowercase();
 
-    // Check pool exists and is active
+    
     let pool: Pool = sqlx::query_as(
         "SELECT * FROM pools WHERE code = $1 AND is_active = true"
     )
@@ -33,7 +33,7 @@ pub async fn submit_certificate(
     .map_err(|_| ApiError::Internal)?
     .ok_or_else(|| ApiError::BadRequest("Pool not found or inactive".into()))?;
 
-    // Check if document hash already submitted
+    
     let exists: (i64,) = sqlx::query_as(
         "SELECT COUNT(*) FROM certificates WHERE document_hash = $1"
     )
@@ -46,7 +46,7 @@ pub async fn submit_certificate(
         return Err(ApiError::BadRequest("Certificate already submitted".into()));
     }
 
-    // Create certificate
+    
     let cert: Certificate = sqlx::query_as(r#"
         INSERT INTO certificates (
             pool_id, certificator_wallet, recipient_name, recipient_wallet,
@@ -76,7 +76,7 @@ pub async fn submit_certificate(
     })))
 }
 
-/// Get certificates in pool (validator only)
+
 #[get("/pools/{code}/certificates")]
 pub async fn list_pool_certificates(
     state: web::Data<AppState>,
@@ -86,7 +86,7 @@ pub async fn list_pool_certificates(
 ) -> Result<impl Responder, ApiError> {
     let code = path.into_inner().to_uppercase();
 
-    // Get pool
+    
     let pool: Pool = sqlx::query_as("SELECT * FROM pools WHERE code = $1")
         .bind(&code)
         .fetch_optional(&state.db)
@@ -94,7 +94,7 @@ pub async fn list_pool_certificates(
         .map_err(|_| ApiError::Internal)?
         .ok_or(ApiError::NotFound)?;
 
-    // Check ownership if email user
+    
     if user.auth_type == "email" {
         let user_id: i32 = user.sub.parse().map_err(|_| ApiError::Internal)?;
         if pool.validator_id != user_id && user.role != "admin" {
@@ -102,7 +102,7 @@ pub async fn list_pool_certificates(
         }
     }
 
-    // Build query with optional status filter
+    
     let status_filter = query.get("status");
     let certificates: Vec<Certificate> = if let Some(status) = status_filter {
         sqlx::query_as(
@@ -126,7 +126,7 @@ pub async fn list_pool_certificates(
     Ok(HttpResponse::Ok().json(certificates))
 }
 
-/// Approve/reject certificate (validator only)
+
 #[post("/certificates/{id}/decision")]
 pub async fn decide_certificate(
     state: web::Data<AppState>,
@@ -141,7 +141,7 @@ pub async fn decide_certificate(
     let user_id: i32 = user.sub.parse().map_err(|_| ApiError::Internal)?;
     let cert_id = path.into_inner();
 
-    // Get certificate
+    
     let cert: Certificate = sqlx::query_as("SELECT * FROM certificates WHERE id = $1")
         .bind(cert_id)
         .fetch_optional(&state.db)
@@ -153,7 +153,7 @@ pub async fn decide_certificate(
         return Err(ApiError::BadRequest("Certificate already processed".into()));
     }
 
-    // Check pool ownership
+    
     let pool: Pool = sqlx::query_as("SELECT * FROM pools WHERE id = $1")
         .bind(cert.pool_id)
         .fetch_one(&state.db)
@@ -165,7 +165,7 @@ pub async fn decide_certificate(
     }
 
     if payload.approve {
-        // Must have tx_hash and token_id for minting
+        
         let tx_hash = payload.tx_hash.as_ref()
             .ok_or_else(|| ApiError::BadRequest("tx_hash required for approval".into()))?;
         let token_id = payload.token_id
@@ -211,7 +211,7 @@ pub async fn decide_certificate(
     }
 }
 
-/// Get my certificates (certificator wallet)
+
 #[get("/certificates/my")]
 pub async fn my_certificates(
     state: web::Data<AppState>,
@@ -231,7 +231,7 @@ pub async fn my_certificates(
     .await
     .map_err(|_| ApiError::Internal)?;
 
-    // Get pool info for each
+    
     let mut results = Vec::new();
     for cert in certificates {
         let pool: Pool = sqlx::query_as("SELECT * FROM pools WHERE id = $1")
@@ -250,7 +250,7 @@ pub async fn my_certificates(
     Ok(HttpResponse::Ok().json(results))
 }
 
-/// Verify certificate by hash (public)
+
 #[get("/certificates/verify/{hash}")]
 pub async fn verify_certificate(
     state: web::Data<AppState>,
@@ -267,7 +267,7 @@ pub async fn verify_certificate(
     .map_err(|_| ApiError::Internal)?;
 
     if let Some(cert) = cert {
-        // Get pool and validator info
+        
         let pool: Pool = sqlx::query_as("SELECT * FROM pools WHERE id = $1")
             .bind(cert.pool_id)
             .fetch_one(&state.db)
@@ -307,7 +307,7 @@ pub async fn verify_certificate(
     }
 }
 
-/// Get public stats
+
 #[get("/stats")]
 pub async fn public_stats(
     state: web::Data<AppState>,

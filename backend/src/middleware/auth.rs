@@ -1,4 +1,4 @@
-//! Authentication middleware and extractors
+
 
 use actix_web::{web::Data, FromRequest, HttpRequest};
 use jsonwebtoken::{decode, DecodingKey, Validation};
@@ -7,12 +7,12 @@ use crate::errors::ApiError;
 use crate::models::Claims;
 use crate::state::AppState;
 
-/// Authenticated user extracted from JWT
+
 #[derive(Debug, Clone)]
 pub struct AuthUser {
-    pub sub: String,       // user_id or wallet_address
-    pub role: String,      // "admin" | "validator" | "certificator"
-    pub auth_type: String, // "email" | "wallet"
+    pub sub: String,       
+    pub role: String,      
+    pub auth_type: String, 
 }
 
 impl FromRequest for AuthUser {

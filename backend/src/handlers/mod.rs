@@ -1,4 +1,4 @@
-//! API handlers
+
 
 pub mod auth;
 pub mod admin;

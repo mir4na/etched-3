@@ -1,4 +1,4 @@
-//! Admin handlers
+
 
 use actix_web::{get, post, web, HttpResponse, Responder};
 use chrono::Utc;
@@ -8,7 +8,7 @@ use crate::middleware::AuthUser;
 use crate::models::*;
 use crate::state::AppState;
 
-/// List pending validator requests
+
 #[get("/admin/validator-requests")]
 pub async fn list_validator_requests(
     state: web::Data<AppState>,
@@ -25,7 +25,7 @@ pub async fn list_validator_requests(
     .await
     .map_err(|_| ApiError::Internal)?;
 
-    // Get user info for each request
+    
     let mut results = Vec::new();
     for req in requests {
         let user: User = sqlx::query_as("SELECT * FROM users WHERE id = $1")
@@ -43,7 +43,7 @@ pub async fn list_validator_requests(
     Ok(HttpResponse::Ok().json(results))
 }
 
-/// Approve/reject validator request
+
 #[post("/admin/validator-requests/{id}/decision")]
 pub async fn decide_validator_request(
     state: web::Data<AppState>,
@@ -58,7 +58,7 @@ pub async fn decide_validator_request(
     let request_id = path.into_inner();
     let admin_id: i32 = user.sub.parse().map_err(|_| ApiError::Internal)?;
 
-    // Check request exists
+    
     let _request: ValidatorRequest = sqlx::query_as(
         "SELECT * FROM validator_requests WHERE id = $1"
     )
@@ -90,7 +90,7 @@ pub async fn decide_validator_request(
     })))
 }
 
-/// Get all validators (approved)
+
 #[get("/admin/validators")]
 pub async fn list_validators(
     state: web::Data<AppState>,
@@ -100,7 +100,7 @@ pub async fn list_validators(
         return Err(ApiError::Forbidden);
     }
 
-    // Fetch approved validators
+    
     let users: Vec<User> = sqlx::query_as(r#"
         SELECT u.* FROM users u
         JOIN validator_requests vr ON u.id = vr.user_id
@@ -131,7 +131,7 @@ pub async fn list_validators(
     Ok(HttpResponse::Ok().json(results))
 }
 
-/// Get admin stats
+
 #[get("/admin/stats")]
 pub async fn admin_stats(
     state: web::Data<AppState>,

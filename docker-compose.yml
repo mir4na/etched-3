@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-  # Hardhat local blockchain node
   hardhat:
     image: node:18-alpine
     working_dir: /app
@@ -16,7 +15,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # Rust backend API
   backend:
     build:
       context: ./backend
@@ -34,7 +32,6 @@ services:
       hardhat:
         condition: service_healthy
 
-  # Next.js frontend
   frontend:
     build:
       context: ./frontend

@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/**
- * @title ICertificateSBT
- * @dev Interface for the Certificate SBT contract
- */
+
 interface ICertificateSBT {
-    // Enums
+    
     enum CertificateStatus {
         Pending,
         Approved,
@@ -14,7 +11,7 @@ interface ICertificateSBT {
         Minted
     }
 
-    // Structs
+    
     struct Institution {
         string name;
         string institutionId;
@@ -58,7 +55,7 @@ interface ICertificateSBT {
         uint256 createdAt;
     }
 
-    // Events
+    
     event ValidatorAdded(
         address indexed validator,
         string institutionId,
@@ -105,7 +102,7 @@ interface ICertificateSBT {
         string certificateHash
     );
 
-    // View functions
+    
     function verifyCertificateByHash(
         string memory certificateHash
     )
@@ -141,7 +138,7 @@ interface ICertificateSBT {
 
     function totalRequests() external view returns (uint256);
 
-    // Pool functions
+    
     function createPool(
         string memory name,
         string memory description
@@ -151,7 +148,7 @@ interface ICertificateSBT {
 
     function totalPools() external view returns (uint256);
 
-    // Admin functions
+    
     function setFeeReceiver(address _receiver) external;
 
     function setPoolCreationFee(uint256 _fee) external;
