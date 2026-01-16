@@ -10,10 +10,22 @@ services:
       - "8545:8545"
     command: sh -c "npm install && npx hardhat node"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8545"]
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8545" ]
       interval: 5s
       timeout: 3s
       retries: 10
+
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: etched
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: etched
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   backend:
     build:
@@ -22,29 +34,36 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - JWT_SECRET=${JWT_SECRET}
-      - ADMIN_ADDRESSES=${ADMIN_ADDRESSES}
+      - DATABASE_URL=postgres://etched:password@db:5432/etched
+      - JWT_SECRET=${JWT_SECRET:-dev_secret}
+      - ADMIN_WALLET=${ADMIN_WALLET}
       - PUBLIC_BASE_URL=http://localhost:8080
       - BIND_ADDR=0.0.0.0:8080
+      - POOL_COST_ETH=0.1
     volumes:
       - ./backend/data:/app/data
     depends_on:
       hardhat:
         condition: service_healthy
+      db:
+        condition: service_started
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE: http://localhost:8080
+        NEXT_PUBLIC_CONTRACT_ADDRESS: ${CONTRACT_ADDRESS}
+        NEXT_PUBLIC_CHAIN_ID: 31337
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_BASE=http://localhost:8080
-      - NEXT_PUBLIC_CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
-      - NEXT_PUBLIC_CHAIN_ID=31337
     depends_on:
       - backend
 
 networks:
   default:
     name: etched-network
+
+volumes:
+  postgres_data:

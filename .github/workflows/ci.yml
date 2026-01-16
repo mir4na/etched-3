@@ -108,8 +108,11 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE: {API_BASE}
+          NEXT_PUBLIC_CONTRACT_ADDRESS: {CONTRACT_ADDRESS}
+          NEXT_PUBLIC_CHAIN_ID: {CHAIN_ID}
 
-  # Security Audit
   security:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -141,7 +144,6 @@ jobs:
         run: cargo audit
         continue-on-error: true
 
-  # All checks passed
   ci-success:
     name: CI Success
     needs: [contracts, backend, frontend]
