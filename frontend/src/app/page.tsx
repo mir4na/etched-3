@@ -546,10 +546,9 @@ export default function Home() {
             {role === "certificator" ? `${wallet.slice(0, 6)}...` : userData?.username}
           </button>
         ) : (
-          <div style={{ display: "flex", gap: 10 }}>
+          <div className="nav-buttons">
             {section !== "home" && <button className="btn-connect" onClick={() => setSection("home")}>HOME</button>}
             <button className="btn-connect" onClick={() => setSection("login")}>LOGIN</button>
-            { }
           </div>
         )}
       </nav>
@@ -578,16 +577,16 @@ export default function Home() {
 
       { }
       {section === "login" && (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
-          <div className="paper-card" style={{ maxWidth: 420, width: "90%" }}>
+        <div className="form-container">
+          <div className="paper-card form-card">
             <div className="card-eyebrow">admin / validator</div>
             <h2 className="card-title">LOGIN</h2>
-            <div style={{ display: "grid", gap: 14 }}>
+            <div className="form-grid">
               <input placeholder="Email" type="email" value={formData.email || ""} onChange={e => setFormData({ ...formData, email: e.target.value })} autoFocus />
               <input placeholder="Password" type="password" value={formData.password || ""} onChange={e => setFormData({ ...formData, password: e.target.value })} />
               <button className="btn-primary" onClick={handleLogin} disabled={loading}>{loading ? <Icons.Loader width={16} /> : "LOGIN →"}</button>
             </div>
-            <div style={{ marginTop: 24, textAlign: "center", fontSize: "0.85rem" }}>
+            <div className="mb-responsive" style={{ marginTop: 24, textAlign: "center", fontSize: "0.85rem" }}>
               New validator? <span style={{ color: "var(--c-purple)", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }} onClick={() => setSection("register")}>Register here</span>
             </div>
             <button className="btn-outline" onClick={() => setSection("home")}>← BACK</button>
@@ -597,20 +596,20 @@ export default function Home() {
 
       { }
       {section === "register" && (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
-          <div className="paper-card" style={{ maxWidth: 520, width: "90%" }}>
+        <div className="form-container">
+          <div className="paper-card form-card wide">
             <div className="card-eyebrow">validator registration</div>
             <h2 className="card-title">Become a Validator</h2>
-            <p style={{ fontSize: "0.9rem", marginBottom: 24 }}>Register your institution to validate certificates on the blockchain.</p>
-            <div style={{ display: "grid", gap: 14 }}>
+            <p className="mb-responsive" style={{ fontSize: "0.9rem" }}>Register your institution to validate certificates on the blockchain.</p>
+            <div className="form-grid">
               <input placeholder="Username *" value={formData.username || ""} onChange={e => setFormData({ ...formData, username: e.target.value })} />
               <input placeholder="Email *" type="email" value={formData.email || ""} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               <input placeholder="Password *" type="password" value={formData.password || ""} onChange={e => setFormData({ ...formData, password: e.target.value })} />
               <input placeholder="Institution Name *" value={formData.institution_name || ""} onChange={e => setFormData({ ...formData, institution_name: e.target.value })} />
               <input placeholder="Institution ID *" value={formData.institution_id || ""} onChange={e => setFormData({ ...formData, institution_id: e.target.value })} />
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: "0.8rem", fontWeight: 700 }}>Proof Document (License/ID)</label>
-                <input type="file" onChange={e => setRegisterFile(e.target.files?.[0] || null)} style={{ padding: "10px", background: "#fff" }} />
+              <div className="file-input-container">
+                <label>Proof Document (License/ID)</label>
+                <input type="file" onChange={e => setRegisterFile(e.target.files?.[0] || null)} />
               </div>
               <button className="btn-primary" onClick={handleRegister} disabled={loading}>{loading ? <Icons.Loader width={16} /> : "SUBMIT REGISTRATION →"}</button>
             </div>
@@ -621,26 +620,26 @@ export default function Home() {
 
       { }
       {section === "verify" && (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
-          <div className="paper-card" style={{ maxWidth: 600, width: "90%" }}>
+        <div className="form-container">
+          <div className="paper-card form-card wider">
             <div className="card-eyebrow">public verification</div>
             <h2 className="card-title">verify certificate</h2>
-            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <input placeholder="Enter certificate hash (0x...)" value={verifyHash} onChange={e => setVerifyHash(e.target.value)} style={{ flex: 1, padding: "12px 16px", borderRadius: 0, border: "2px solid var(--c-black)", background: "#f0f0f0", color: "var(--c-black)" }} />
-              <button className="btn-primary" style={{ width: "auto", padding: "0 24px", marginTop: 0 }} onClick={handleVerify} disabled={loading}>{loading ? <Icons.Loader width={16} /> : "verify"}</button>
+            <div className="verify-input-container">
+              <input placeholder="Enter certificate hash (0x...)" value={verifyHash} onChange={e => setVerifyHash(e.target.value)} style={{ flex: 1 }} />
+              <button className="btn-primary full-width-mobile" style={{ width: "auto", padding: "12px 24px", marginTop: 0 }} onClick={handleVerify} disabled={loading}>{loading ? <Icons.Loader width={16} /> : "VERIFY"}</button>
             </div>
             {verifyResult && (
-              <div style={{ marginTop: 20, padding: 16, background: verifyResult.valid ? "rgba(100,200,100,0.1)" : "rgba(200,100,100,0.1)", border: "2px solid var(--c-black)" }}>
+              <div className="verify-result" style={{ background: verifyResult.valid ? "rgba(100,200,100,0.1)" : "rgba(200,100,100,0.1)" }}>
                 {verifyResult.valid ? (
                   <>
-                    <p style={{ fontWeight: 700, color: "var(--c-black)", marginBottom: 12 }}><Icons.Check width={16} style={{ marginRight: 6 }} />Certificate Valid</p>
-                    <p style={{ fontSize: "0.85rem", marginBottom: 4 }}>Recipient: {verifyResult.certificate.recipient_name}</p>
+                    <p style={{ fontWeight: 700, color: "var(--c-black)", marginBottom: 12, display: "flex", alignItems: "center" }}><Icons.Check width={16} style={{ marginRight: 6, flexShrink: 0 }} />Certificate Valid</p>
+                    <p style={{ fontSize: "0.85rem", marginBottom: 4 }}>Recipient: <span className="text-break">{verifyResult.certificate.recipient_name}</span></p>
                     <p style={{ fontSize: "0.85rem", marginBottom: 4 }}>Type: {verifyResult.certificate.certificate_type}</p>
-                    <p style={{ fontSize: "0.85rem", marginBottom: 4 }}>Issuer: {verifyResult.issuer.institution_name}</p>
+                    <p style={{ fontSize: "0.85rem", marginBottom: 4 }}>Issuer: <span className="text-break">{verifyResult.issuer.institution_name}</span></p>
                     <p style={{ fontSize: "0.85rem" }}>Token ID: #{verifyResult.certificate.token_id}</p>
                   </>
                 ) : (
-                  <p style={{ fontWeight: 700, color: "var(--c-black)" }}><Icons.X width={16} style={{ marginRight: 6 }} />Certificate Not Found</p>
+                  <p style={{ fontWeight: 700, color: "var(--c-black)", display: "flex", alignItems: "center" }}><Icons.X width={16} style={{ marginRight: 6, flexShrink: 0 }} />Certificate Not Found</p>
                 )}
               </div>
             )}
@@ -651,11 +650,11 @@ export default function Home() {
 
       { }
       {section === "certificator" && role !== "certificator" && (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 10 }}>
-          <div className="paper-card" style={{ maxWidth: 420, width: "90%", textAlign: "center" }}>
+        <div className="form-container">
+          <div className="paper-card form-card" style={{ textAlign: "center" }}>
             <div className="card-eyebrow">certificator access</div>
             <h2 className="card-title">Connect Wallet</h2>
-            <p style={{ marginBottom: 24, fontSize: "0.9rem" }}>Connect your wallet to submit certificates.</p>
+            <p className="mb-responsive" style={{ fontSize: "0.9rem" }}>Connect your wallet to submit certificates.</p>
             <button className="btn-primary" onClick={handleCertificatorLogin} disabled={loading}>{loading ? <Icons.Loader width={16} /> : "CONNECT WALLET →"}</button>
             <button className="btn-outline" onClick={() => setSection("home")}>← BACK</button>
           </div>
@@ -886,10 +885,10 @@ export default function Home() {
       {section === "dashboard" && role === "validator" && validatorRequest?.status === "rejected" && (
         <div className="dashboard">
           <div className="paper-card">
-            <div style={{ textAlign: "center", padding: 40 }}>
+            <div className="vd-pending">
               <Icons.X width={48} style={{ color: "#C88F8F", marginBottom: 16 }} />
-              <h3 style={{ fontStyle: "italic", marginBottom: 8 }}>Request Rejected</h3>
-              <p style={{ color: "var(--c-text-mid)" }}>Your validator request has been rejected by admin.</p>
+              <h2 style={{ marginBottom: 8 }}>Request Rejected</h2>
+              <p style={{ opacity: 0.7 }}>Your validator request has been rejected by admin.</p>
             </div>
           </div>
         </div>
@@ -909,7 +908,7 @@ export default function Home() {
             </div>
             <div className="paper-card col-4">
               <div className="card-eyebrow">enter pool code</div>
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <div className="pool-code-container">
                 <input
                   placeholder="ABC123"
                   value={poolCode}
@@ -919,7 +918,7 @@ export default function Home() {
                 />
                 <button
                   className="btn-primary"
-                  style={{ width: "auto", padding: "0 16px", marginTop: 0 }}
+                  style={{ width: "auto", padding: "12px 16px", marginTop: 0 }}
                   onClick={handleLookupPool}
                   disabled={loading}
                 >
@@ -950,14 +949,16 @@ export default function Home() {
                       <div className="card-eyebrow" style={{ marginBottom: 8 }}>{c.certificate.certificate_type}</div>
                       <p style={{ fontSize: "0.9rem", marginBottom: 4 }}>Pool: <strong style={{ fontFamily: "monospace", fontSize: "1rem" }}>{c.pool_code}</strong></p>
                       <p
-                        style={{ fontSize: "0.8rem", color: "#666", marginBottom: 8, fontFamily: "monospace", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                        className="cert-hash-copy"
                         onClick={() => { navigator.clipboard.writeText(c.certificate.document_hash); addToast("Hash copied!", "success"); }}
                         title="Click to copy Document Hash"
                       >
-                        <Icons.File width={12} /> {c.certificate.document_hash.slice(0, 10)}... <span style={{ fontSize: "0.7rem", textDecoration: "underline" }}>COPY</span>
+                        <Icons.File width={12} style={{ flexShrink: 0 }} />
+                        <span className="text-truncate" style={{ maxWidth: "calc(100% - 60px)" }}>{c.certificate.document_hash.slice(0, 14)}...</span>
+                        <span style={{ fontSize: "0.7rem", textDecoration: "underline", flexShrink: 0 }}>COPY</span>
                       </p>
 
-                      <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="submission-status">
                         <span className="status-badge" style={{
                           background: c.certificate.status === "minted" ? "#8FC88F" : c.certificate.status === "rejected" ? "#C88F8F" : "#F0C868",
                           color: "black",
@@ -986,17 +987,17 @@ export default function Home() {
       {showModal === "createPool" && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 12 }}>
               <h3 className="card-title" style={{ marginBottom: 0 }}>Create Pool</h3>
-              <button onClick={() => setShowModal("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-black)" }}><Icons.X width={24} /></button>
+              <button onClick={() => setShowModal("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-black)", flexShrink: 0 }}><Icons.X width={24} /></button>
             </div>
             <p style={{ fontSize: "0.85rem", marginBottom: 16 }}>Cost: {poolInfo?.pool_cost_eth || 0.1} ETH (sent to admin).</p>
-            <div style={{ display: "grid", gap: 12 }}>
+            <div className="form-grid">
               <input placeholder="Pool Name *" value={formData.pool_name || ""} onChange={e => setFormData({ ...formData, pool_name: e.target.value })} />
-              <textarea placeholder="Description (optional)" value={formData.pool_description || ""} onChange={e => setFormData({ ...formData, pool_description: e.target.value })} rows={3} style={{ width: "100%", padding: "14px", border: "2px solid var(--c-black)", fontFamily: "var(--font-mono)", fontSize: "1rem", resize: "none", background: "#f0f0f0" }} />
+              <textarea placeholder="Description (optional)" value={formData.pool_description || ""} onChange={e => setFormData({ ...formData, pool_description: e.target.value })} rows={3} style={{ resize: "none" }} />
             </div>
-            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <button className="btn-outline" style={{ flex: 1, marginTop: 0 }} onClick={() => setShowModal("")}>cancel</button>
+            <div className="modal-actions">
+              <button className="btn-outline" style={{ flex: 1, marginTop: 0 }} onClick={() => setShowModal("")}>CANCEL</button>
               <button className="btn-primary" style={{ flex: 1, marginTop: 0 }} onClick={handleCreatePool} disabled={loading}>
                 {loading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
@@ -1012,12 +1013,12 @@ export default function Home() {
       {showModal === "managePool" && selectedPool && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: 700 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h3 className="card-title" style={{ marginBottom: 0 }}>Manage Pool: {selectedPool.code}</h3>
-              <button onClick={() => setShowModal("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-black)" }}><Icons.X width={24} /></button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 12 }}>
+              <h3 className="card-title" style={{ marginBottom: 0 }}>Manage Pool: <span className="text-break">{selectedPool.code}</span></h3>
+              <button onClick={() => setShowModal("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-black)", flexShrink: 0 }}><Icons.X width={24} /></button>
             </div>
 
-            <h4 style={{ marginBottom: 12 }}>Pending Certificates ({poolCertificates.length})</h4>
+            <h4 style={{ marginBottom: 12, fontSize: "0.95rem" }}>Pending Certificates ({poolCertificates.length})</h4>
 
             {poolCertificates.length === 0 ? (
               <p style={{ color: "#888" }}>No pending certificates.</p>
@@ -1026,19 +1027,19 @@ export default function Home() {
                 {poolCertificates.map((c: any, i: number) => (
                   <div key={i} className="request-card">
                     <div className="card-eyebrow" style={{ marginBottom: 4 }}>{c.certificate_type}</div>
-                    <div style={{ fontWeight: 700, fontSize: "1rem" }}>{c.recipient_name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "#666", fontFamily: "monospace", marginBottom: 8 }}>{c.recipient_wallet}</div>
+                    <div style={{ fontWeight: 700, fontSize: "1rem" }} className="text-break">{c.recipient_name}</div>
+                    <div className="hash-display" style={{ marginBottom: 8 }}>{c.recipient_wallet}</div>
 
                     {c.metadata_uri && (
                       <a href={getGatewayUrl(c.metadata_uri)} target="_blank" rel="noopener noreferrer"
-                        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", color: "var(--c-purple)", fontWeight: 700, marginTop: 8, marginBottom: 16, border: "1px dashed var(--c-purple)", padding: 8, borderRadius: 4 }}>
+                        className="vd-cert-document-link" style={{ marginBottom: 16 }}>
                         <Icons.File width={14} /> View File (IPFS)
                       </a>
                     )}
 
-                    <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
-                      <button className="btn-primary" style={{ padding: 8, flex: 1, fontSize: "0.8rem" }} onClick={() => handleApproveCert(c)} disabled={loading}>APPROVE</button>
-                      <button className="btn-outline" style={{ padding: 8, flex: 1, fontSize: "0.8rem", marginTop: 0 }} onClick={() => handleRejectCert(c.id)} disabled={loading}>REJECT</button>
+                    <div className="flex-col-mobile" style={{ marginTop: "auto" }}>
+                      <button className="btn-primary" style={{ padding: "10px 8px", flex: 1, fontSize: "0.8rem" }} onClick={() => handleApproveCert(c)} disabled={loading}>APPROVE</button>
+                      <button className="btn-outline" style={{ padding: "10px 8px", flex: 1, fontSize: "0.8rem", marginTop: 0 }} onClick={() => handleRejectCert(c.id)} disabled={loading}>REJECT</button>
                     </div>
                   </div>
                 ))}
@@ -1051,11 +1052,11 @@ export default function Home() {
       {showModal === "submitCert" && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 12 }}>
               <h3 className="card-title" style={{ marginBottom: 0 }}>Submit Certificate</h3>
-              <button onClick={() => setShowModal("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-black)" }}><Icons.X width={24} /></button>
+              <button onClick={() => setShowModal("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-black)", flexShrink: 0 }}><Icons.X width={24} /></button>
             </div>
-            <div style={{ display: "grid", gap: 12 }}>
+            <div className="form-grid">
               <input placeholder="Recipient Name *" value={formData.recipient_name || ""} onChange={e => setFormData({ ...formData, recipient_name: e.target.value })} />
               <input placeholder="Recipient Wallet (0x...) *" value={formData.recipient_wallet || ""} onChange={e => setFormData({ ...formData, recipient_wallet: e.target.value })} />
               <select value={formData.certificate_type || ""} onChange={e => setFormData({ ...formData, certificate_type: e.target.value })}>
@@ -1065,13 +1066,13 @@ export default function Home() {
                 <option value="Degree">Degree</option>
                 <option value="License">License</option>
               </select>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: "0.8rem", fontWeight: 700 }}>Certificate File (Image/PDF)</label>
-                <input type="file" onChange={e => setCertificateFile(e.target.files?.[0] || null)} style={{ padding: "10px", background: "#fff" }} />
+              <div className="file-input-container">
+                <label>Certificate File (Image/PDF)</label>
+                <input type="file" onChange={e => setCertificateFile(e.target.files?.[0] || null)} />
               </div>
             </div>
-            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <button className="btn-outline" style={{ flex: 1, marginTop: 0 }} onClick={() => setShowModal("")}>cancel</button>
+            <div className="modal-actions">
+              <button className="btn-outline" style={{ flex: 1, marginTop: 0 }} onClick={() => setShowModal("")}>CANCEL</button>
               <button className="btn-primary" style={{ flex: 1, marginTop: 0 }} onClick={handleSubmitCertificate} disabled={loading}>
                 {loading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>

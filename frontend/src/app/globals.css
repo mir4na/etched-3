@@ -137,10 +137,22 @@ body {
   letter-spacing: -0.02em;
   cursor: pointer;
   transition: opacity 0.15s;
+  flex-shrink: 0;
 }
 
 .nav-brand:hover {
   opacity: 0.7;
+}
+
+.nav-brand-text {
+  white-space: nowrap;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .btn-connect {
@@ -158,6 +170,7 @@ body {
   letter-spacing: 0.05em;
   transition: all 0.1s;
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
 }
 
 .btn-connect:hover {
@@ -1142,6 +1155,12 @@ select:focus {
     align-items: flex-start;
   }
 
+  .vd-header > div:last-child {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
   .vd-pool-detail-header {
     flex-direction: column;
     gap: 16px;
@@ -1168,6 +1187,49 @@ select:focus {
   .floating-shape {
     display: none;
   }
+
+  .pool-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+/* Medium Mobile - Tablet portrait */
+@media (max-width: 768px) {
+  .navbar {
+    width: 94%;
+    padding: 0 18px;
+  }
+
+  .nav-buttons {
+    gap: 8px;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    width: 100%;
+    padding: 0 20px;
+    gap: 12px;
+  }
+
+  .btn-brutal {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .col-4 {
+    grid-column: span 12;
+  }
+
+  .vd-pool-detail-header .vd-pool-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-content {
+    width: 94%;
+    max-width: none;
+    margin: 16px;
+  }
 }
 
 /* Mobile Devices */
@@ -1175,17 +1237,32 @@ select:focus {
   .navbar {
     width: 94%;
     height: 54px;
-    padding: 0 16px;
+    padding: 0 14px;
     top: 16px;
+    gap: 8px;
+  }
+
+  .nav-brand {
+    gap: 8px;
+  }
+
+  .nav-brand svg {
+    width: 18px;
+    height: 18px;
   }
 
   .nav-brand-text {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .nav-buttons {
+    gap: 6px;
   }
 
   .btn-connect {
-    padding: 6px 12px;
-    font-size: 0.75rem;
+    padding: 6px 10px;
+    font-size: 0.7rem;
+    letter-spacing: 0.02em;
   }
 
   .hero {
@@ -1201,11 +1278,13 @@ select:focus {
   .truth-box {
     padding: 0 12px;
     margin: 8px 0;
+    box-shadow: 4px 4px 0 var(--c-black);
   }
 
   .hero-subtitle {
     font-size: 0.7rem;
     padding: 6px;
+    max-width: 100%;
   }
 
   .hero-cta {
@@ -1232,10 +1311,15 @@ select:focus {
 
   .card-title {
     font-size: 1.5rem;
+    text-decoration-thickness: 4px;
   }
 
   .card-value {
     font-size: 2rem;
+  }
+
+  .card-eyebrow {
+    font-size: 0.65rem;
   }
 
   .vd-stats {
@@ -1252,6 +1336,11 @@ select:focus {
 
   .vd-header {
     padding: 16px;
+    box-shadow: 4px 4px 0 var(--c-black);
+  }
+
+  .vd-header > div:last-child {
+    gap: 10px;
   }
 
   .vd-avatar {
@@ -1262,40 +1351,82 @@ select:focus {
 
   .vd-wallet-badge {
     padding: 6px 10px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .status-badge {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     padding: 3px 6px;
   }
 
   .vd-stat-card {
     padding: 16px;
+    box-shadow: 3px 3px 0 var(--c-black);
   }
 
   .vd-stat-value {
     font-size: 2rem;
   }
 
+  .vd-stat-label {
+    font-size: 0.7rem;
+  }
+
   .vd-create-btn {
     padding: 16px;
+    box-shadow: 3px 3px 0 var(--c-black);
+  }
+
+  .vd-section-header h3 {
+    font-size: 1rem;
+  }
+
+  .vd-pools-grid {
+    grid-template-columns: 1fr;
   }
 
   .vd-pool-card {
     box-shadow: 3px 3px 0 var(--c-black);
   }
 
+  .vd-pool-code {
+    font-size: 1rem;
+  }
+
+  .vd-pool-name {
+    font-size: 0.9rem;
+    padding: 12px 14px 0;
+  }
+
+  .vd-pool-stats {
+    font-size: 0.8rem;
+    padding: 10px 14px;
+  }
+
+  .vd-pool-action {
+    font-size: 0.75rem;
+    padding: 12px 14px;
+  }
+
   .vd-cert-card {
     padding: 16px;
+    box-shadow: 3px 3px 0 #ddd;
   }
 
   .vd-cert-type {
     font-size: 1rem;
   }
 
+  .vd-cert-recipient {
+    font-size: 0.85rem;
+  }
+
   .vd-cert-details {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    word-break: break-all;
   }
 
   .vd-cert-document-link {
@@ -1303,17 +1434,40 @@ select:focus {
     padding: 8px 12px;
   }
 
+  .vd-back-btn {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
+
+  .vd-pending {
+    padding: 40px 20px;
+  }
+
+  .vd-pending h2 {
+    font-size: 1.2rem;
+  }
+
+  .vd-empty {
+    padding: 30px 20px;
+    font-size: 0.9rem;
+  }
+
   .btn-approve,
   .btn-reject {
-    padding: 10px 12px;
+    padding: 12px 14px;
     font-size: 0.8rem;
   }
 
   .modal-content {
     width: 95%;
-    padding: 24px;
-    max-height: 90vh;
+    padding: 20px;
+    max-height: 85vh;
     overflow-y: auto;
+    box-shadow: 6px 6px 0 var(--c-black);
+  }
+
+  .modal-content .card-title {
+    font-size: 1.3rem;
   }
 
   .request-grid {
@@ -1322,11 +1476,25 @@ select:focus {
 
   .request-card {
     padding: 14px;
+    box-shadow: 3px 3px 0 #ddd;
   }
 
-  input, select {
+  .request-card > div:last-child {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .request-card .btn-primary,
+  .request-card .btn-outline {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+
+  /* iOS auto-zoom prevention - inputs must be 16px */
+  input, select, textarea {
     padding: 12px;
-    font-size: 0.9rem;
+    font-size: 16px;
   }
 
   .btn-primary,
@@ -1340,6 +1508,10 @@ select:focus {
     grid-column: span 12;
   }
 
+  .dash-grid {
+    gap: 12px;
+  }
+
   .info-bar {
     flex-direction: column;
     gap: 12px;
@@ -1348,49 +1520,368 @@ select:focus {
   .info-card {
     padding: 10px 16px;
   }
+
+  .info-value {
+    font-size: 1.3rem;
+  }
+
+  .pool-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pool-card-unique {
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .pool-card-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pool-card-body {
+    padding: 16px;
+  }
 }
 
 /* Extra Small Devices */
 @media (max-width: 380px) {
   .navbar {
     height: 50px;
-    padding: 0 12px;
+    padding: 0 10px;
+    top: 12px;
+  }
+
+  .nav-brand {
+    gap: 6px;
+  }
+
+  .nav-brand svg {
+    width: 16px;
+    height: 16px;
   }
 
   .nav-brand-text {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  .nav-buttons {
+    gap: 4px;
   }
 
   .btn-connect {
-    padding: 5px 10px;
-    font-size: 0.7rem;
+    padding: 5px 8px;
+    font-size: 0.65rem;
+  }
+
+  .hero {
+    padding: 70px 12px 30px;
   }
 
   .hero-text-black,
   .hero-text-purple {
-    font-size: clamp(1.8rem, 14vw, 3rem);
+    font-size: clamp(1.6rem, 13vw, 2.5rem);
+  }
+
+  .truth-box {
+    padding: 0 10px;
+    border-width: 3px;
+    box-shadow: 3px 3px 0 var(--c-black);
+  }
+
+  .hero-subtitle {
+    font-size: 0.65rem;
+  }
+
+  .hero-cta {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .btn-brutal {
+    padding: 12px 16px;
+    font-size: 0.8rem;
+  }
+
+  .dashboard {
+    padding: 80px 10px 16px;
   }
 
   .paper-card {
-    padding: 16px;
+    padding: 14px;
+    box-shadow: 3px 3px 0 var(--c-black);
   }
 
   .card-title {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+    text-decoration-thickness: 3px;
   }
 
   .card-value {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+  }
+
+  .card-eyebrow {
+    font-size: 0.6rem;
+  }
+
+  .validator-dashboard {
+    padding: 80px 10px 16px;
+  }
+
+  .vd-header {
+    padding: 14px;
+    box-shadow: 3px 3px 0 var(--c-black);
   }
 
   .vd-header-info {
     gap: 10px;
   }
 
-  .vd-avatar {
-    width: 36px;
-    height: 36px;
+  .vd-header-info > div > div:first-child {
     font-size: 1rem;
+  }
+
+  .vd-header-info > div > div:last-child {
+    font-size: 0.7rem;
+  }
+
+  .vd-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 0.9rem;
+    border-width: 2px;
+  }
+
+  .vd-wallet-badge {
+    padding: 5px 8px;
+    font-size: 0.6rem;
+    max-width: 120px;
+  }
+
+  .vd-content {
+    gap: 16px;
+  }
+
+  .vd-stat-card {
+    padding: 14px;
+  }
+
+  .vd-stat-value {
+    font-size: 1.8rem;
+  }
+
+  .vd-stat-label {
+    font-size: 0.65rem;
+  }
+
+  .vd-create-btn {
+    padding: 14px;
+    font-size: 0.85rem;
+  }
+
+  .vd-create-btn small {
+    font-size: 0.65rem;
+  }
+
+  .vd-section-header {
+    padding-bottom: 6px;
+  }
+
+  .vd-section-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .vd-pool-header {
+    padding: 12px 14px;
+  }
+
+  .vd-pool-code {
+    font-size: 0.95rem;
+  }
+
+  .vd-pool-status {
+    font-size: 0.6rem;
+    padding: 3px 8px;
+  }
+
+  .vd-pool-name {
+    font-size: 0.85rem;
+    padding: 10px 12px 0;
+  }
+
+  .vd-pool-stats {
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
+
+  .vd-pool-action {
+    font-size: 0.7rem;
+    padding: 10px 12px;
+  }
+
+  .vd-cert-card {
+    padding: 14px;
+  }
+
+  .vd-cert-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .vd-cert-type {
+    font-size: 0.95rem;
+  }
+
+  .vd-cert-recipient {
+    font-size: 0.8rem;
+  }
+
+  .vd-cert-status {
+    font-size: 0.6rem;
+    padding: 3px 8px;
+  }
+
+  .vd-cert-details {
+    font-size: 0.65rem;
+    padding: 10px 0;
+  }
+
+  .vd-cert-document-link {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+
+  .vd-back-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .vd-pool-detail-header {
+    padding: 18px;
+    box-shadow: 3px 3px 0 var(--c-black);
+  }
+
+  .vd-pool-detail-header .vd-pool-code {
+    font-size: 1.2rem;
+  }
+
+  .vd-pool-detail-header h2 {
+    font-size: 1rem;
+  }
+
+  .vd-pending {
+    padding: 30px 16px;
+  }
+
+  .vd-pending h2 {
+    font-size: 1.1rem;
+  }
+
+  .vd-pending p {
+    font-size: 0.85rem;
+  }
+
+  .vd-empty {
+    padding: 24px 16px;
+    font-size: 0.85rem;
+  }
+
+  .btn-approve,
+  .btn-reject {
+    padding: 10px 12px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+
+  .modal-content {
+    padding: 16px;
+    max-height: 80vh;
+    box-shadow: 4px 4px 0 var(--c-black);
+  }
+
+  .modal-content .card-title {
+    font-size: 1.1rem;
+  }
+
+  input, select, textarea {
+    padding: 10px;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+
+  .request-card {
+    padding: 12px;
+  }
+
+  .info-value {
+    font-size: 1.2rem;
+  }
+
+  .info-label {
+    font-size: 0.65rem;
+  }
+}
+
+/* Very Small Devices (iPhone SE, etc) */
+@media (max-width: 320px) {
+  .navbar {
+    height: 46px;
+    padding: 0 8px;
+  }
+
+  .nav-brand-text {
+    font-size: 0.7rem;
+  }
+
+  .btn-connect {
+    padding: 4px 6px;
+    font-size: 0.6rem;
+  }
+
+  .hero-text-black,
+  .hero-text-purple {
+    font-size: clamp(1.4rem, 12vw, 2rem);
+  }
+
+  .paper-card {
+    padding: 12px;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
+
+  .card-value {
+    font-size: 1.4rem;
+  }
+
+  .vd-header {
+    padding: 12px;
+  }
+
+  .vd-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+
+  .vd-wallet-badge {
+    max-width: 100px;
+    font-size: 0.55rem;
+  }
+
+  .vd-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .modal-content {
+    padding: 14px;
   }
 }
 
@@ -1459,5 +1950,296 @@ select:focus {
   .paper-card {
     box-shadow: none;
     border: 1px solid #ccc;
+  }
+}
+
+/* =====================================================
+   UTILITY CLASSES FOR RESPONSIVE
+   ===================================================== */
+
+/* Text overflow handling */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-break {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.text-break-all {
+  word-break: break-all;
+}
+
+/* Flex utilities */
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-col-mobile {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .flex-col-mobile {
+    flex-direction: column;
+  }
+}
+
+/* Container utilities */
+.full-width-mobile {
+  width: auto;
+}
+
+@media (max-width: 600px) {
+  .full-width-mobile {
+    width: 100%;
+  }
+}
+
+/* Form container - responsive centering */
+.form-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+  padding: 100px 16px 40px;
+}
+
+@media (max-width: 600px) {
+  .form-container {
+    padding: 80px 12px 24px;
+    align-items: flex-start;
+    padding-top: 90px;
+  }
+}
+
+@media (max-width: 380px) {
+  .form-container {
+    padding: 75px 10px 20px;
+  }
+}
+
+/* Form card */
+.form-card {
+  width: 90%;
+  max-width: 420px;
+}
+
+.form-card.wide {
+  max-width: 520px;
+}
+
+.form-card.wider {
+  max-width: 600px;
+}
+
+@media (max-width: 480px) {
+  .form-card {
+    width: 100%;
+  }
+}
+
+/* Form grid */
+.form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .form-grid {
+    gap: 12px;
+  }
+}
+
+/* Verify input container */
+.verify-input-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 500px) {
+  .verify-input-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .verify-input-container input {
+    width: 100%;
+  }
+
+  .verify-input-container button {
+    width: 100%;
+  }
+}
+
+/* Verify result */
+.verify-result {
+  margin-top: 20px;
+  padding: 16px;
+  border: 2px solid var(--c-black);
+}
+
+@media (max-width: 600px) {
+  .verify-result {
+    padding: 14px;
+  }
+
+  .verify-result p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Hash display */
+.hash-display {
+  font-family: var(--font-mono);
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .hash-display {
+    font-size: 0.75rem;
+  }
+}
+
+/* Pool code input container */
+.pool-code-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 400px) {
+  .pool-code-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pool-code-container input {
+    width: 100%;
+  }
+
+  .pool-code-container button {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+/* Modal action buttons */
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 400px) {
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Certificate hash copy */
+.cert-hash-copy {
+  font-size: 0.8rem;
+  color: #666;
+  font-family: monospace;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  word-break: break-all;
+}
+
+@media (max-width: 600px) {
+  .cert-hash-copy {
+    font-size: 0.7rem;
+  }
+}
+
+/* Status indicators */
+.submission-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+@media (max-width: 400px) {
+  .submission-status {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Responsive spacing utilities */
+.mb-responsive {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+  .mb-responsive {
+    margin-bottom: 16px;
+  }
+}
+
+/* File input styling */
+.file-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-input-container label {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.file-input-container input[type="file"] {
+  padding: 10px;
+  background: #fff;
+}
+
+@media (max-width: 600px) {
+  .file-input-container label {
+    font-size: 0.75rem;
+  }
+
+  .file-input-container input[type="file"] {
+    font-size: 14px;
+  }
+}
+
+/* Textarea styling */
+textarea {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--c-black);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  resize: vertical;
+  background: #f0f0f0;
+  min-height: 80px;
+}
+
+textarea:focus {
+  outline: none;
+  background: var(--c-white);
+  box-shadow: 4px 4px 0 var(--c-black);
+}
+
+@media (max-width: 600px) {
+  textarea {
+    font-size: 16px;
+    padding: 12px;
   }
 }
